@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../db/dexie';
-import { isOnline, checkConnection } from '../services/supabase';
+import { isOnline, checkConnectionDetails, isSupabaseConfigured } from '../services/supabase';
 import { syncWithSupabase } from '../services/sync';
 import './DashboardPage.css';
 
@@ -9,18 +9,26 @@ function DashboardPage({ technician, onLogout }) {
   const [buildingCount, setBuildingCount] = useState(0);
   const [ctoCount, setCTOCount] = useState(0);
   const [online, setOnline] = useState(isOnline());
+  const [supabaseStatus, setSupabaseStatus] = useState({
+    connected: false,
+    message: isSupabaseConfigured() ? 'Verificando Supabase...' : 'Supabase nao configurado'
+  });
   const [syncStatus, setSyncStatus] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     loadStats();
-    setupOnlineListener();
+    checkSupabaseStatus();
+    const cleanupOnlineListener = setupOnlineListener();
+
+    return cleanupOnlineListener;
   }, []);
 
   const setupOnlineListener = () => {
     const updateOnlineStatus = () => {
       setOnline(isOnline());
+      checkSupabaseStatus();
     };
 
     window.addEventListener('online', updateOnlineStatus);
@@ -30,6 +38,11 @@ function DashboardPage({ technician, onLogout }) {
       window.removeEventListener('online', updateOnlineStatus);
       window.removeEventListener('offline', updateOnlineStatus);
     };
+  };
+
+  const checkSupabaseStatus = async () => {
+    const status = await checkConnectionDetails();
+    setSupabaseStatus(status);
   };
 
   const loadStats = async () => {
@@ -53,9 +66,11 @@ function DashboardPage({ technician, onLogout }) {
     try {
       const result = await syncWithSupabase();
       setSyncStatus(result);
+      await checkSupabaseStatus();
       await loadStats();
     } catch (error) {
-      setSyncStatus({ success: false, message: 'Erro ao sincronizar' });
+      setSyncStatus({ success: false, message: error.message || 'Erro ao sincronizar' });
+      await checkSupabaseStatus();
     } finally {
       setIsSyncing(false);
     }
@@ -89,6 +104,11 @@ function DashboardPage({ technician, onLogout }) {
         <div className="connection-status">
           <div className={`sync-indicator ${online ? 'online' : 'offline'}`}></div>
           <span>{online ? 'Online' : 'Offline'}</span>
+        </div>
+
+        <div className="connection-status">
+          <div className={`sync-indicator ${supabaseStatus.connected ? 'online' : 'offline'}`}></div>
+          <span>{supabaseStatus.message}</span>
         </div>
 
         {syncStatus && (

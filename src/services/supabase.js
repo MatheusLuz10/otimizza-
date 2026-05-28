@@ -91,16 +91,46 @@ export const fromSupabaseCTO = (cto, localBuildingId) => ({
 });
 
 export const checkConnection = async () => {
-  if (!isSupabaseConfigured() || !isOnline()) return false;
+  const result = await checkConnectionDetails();
+  return result.connected;
+};
+
+export const checkConnectionDetails = async () => {
+  if (!isSupabaseConfigured()) {
+    return {
+      connected: false,
+      message: 'Supabase nao configurado. Confira as variaveis VITE_SUPABASE_URL e VITE_SUPABASE_KEY.'
+    };
+  }
+
+  if (!isOnline()) {
+    return {
+      connected: false,
+      message: 'Sem conexao com a internet.'
+    };
+  }
 
   try {
     const { error } = await requireClient()
       .from('buildings')
       .select('id', { count: 'exact', head: true });
 
-    return !error;
+    if (error) {
+      return {
+        connected: false,
+        message: error.message || 'Nao foi possivel consultar a tabela buildings.'
+      };
+    }
+
+    return {
+      connected: true,
+      message: 'Supabase conectado'
+    };
   } catch (error) {
-    return false;
+    return {
+      connected: false,
+      message: error.message || 'Erro ao conectar ao Supabase.'
+    };
   }
 };
 
