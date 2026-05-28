@@ -1,0 +1,33 @@
+{
+  "name": "CTO Manager - Gerenciamento de Prédios e Caixas",
+  "short_name": "CTO Manager",
+  "description": "PWA para gerenciamento de prédios e caixas CTO de telecom",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1976d2",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/screenshot1.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ]
+}
