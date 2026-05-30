@@ -116,9 +116,13 @@ export const checkConnectionDetails = async () => {
       .select('id', { count: 'exact', head: true });
 
     if (error) {
+      const details = [error.message, error.details, error.hint, error.code]
+        .filter(Boolean)
+        .join(' - ');
+
       return {
         connected: false,
-        message: error.message || 'Nao foi possivel consultar a tabela buildings.'
+        message: details || 'Nao foi possivel consultar a tabela buildings.'
       };
     }
 
