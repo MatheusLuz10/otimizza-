@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db } from '../db/dexie';
-import { isOnline, checkConnectionDetails, isSupabaseConfigured } from '../services/supabase';
-import { syncWithSupabase } from '../services/sync';
+import { isOnline, checkConnectionDetails, isSupabaseConfigured, fetchBuildings, fetchCTOs } from '../services/supabase';
 import './DashboardPage.css';
 
 function DashboardPage({ technician, onLogout }) {
@@ -11,10 +9,10 @@ function DashboardPage({ technician, onLogout }) {
   const [online, setOnline] = useState(isOnline());
   const [supabaseStatus, setSupabaseStatus] = useState({
     connected: false,
-    message: isSupabaseConfigured() ? 'Verificando Supabase...' : 'Supabase nao configurado'
+    message: isSupabaseConfigured() ? 'Verificando Supabase...' : 'Supabase não configurado'
   });
-  const [syncStatus, setSyncStatus] = useState(null);
-  const [isSyncing, setIsSyncing] = useState(false);
+  const [refreshStatus, setRefreshStatus] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,17 +30,15 @@ function DashboardPage({ technician, onLogout }) {
   }, []);
 
   const setupOnlineListener = () => {
-    const updateOnlineStatus = () => {
+    const update = () => {
       setOnline(isOnline());
       checkSupabaseStatus();
     };
-
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
-
+    window.addEventListener('online', update);
+    window.addEventListener('offline', update);
     return () => {
-      window.removeEventListener('online', updateOnlineStatus);
-      window.removeEventListener('offline', updateOnlineStatus);
+      window.removeEventListener('online', update);
+      window.removeEventListener('offline', update);
     };
   };
 
@@ -52,33 +48,28 @@ function DashboardPage({ technician, onLogout }) {
   };
 
   const loadStats = async () => {
+    if (!isOnline() || !isSupabaseConfigured()) return;
     try {
-      const buildings = await db.buildings.toArray();
-      const ctos = await db.ctos.toArray();
+      const [buildings, ctos] = await Promise.all([fetchBuildings(), fetchCTOs()]);
       setBuildingCount(buildings.length);
       setCTOCount(ctos.length);
     } catch (error) {
-      console.error('Error loading stats:', error);
+      console.error('Erro ao carregar estatísticas:', error);
     }
   };
 
-  const handleSync = async () => {
-    if (!isOnline()) {
-      setSyncStatus({ success: false, message: 'Sem conexão de internet' });
-      return;
-    }
-
-    setIsSyncing(true);
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    setRefreshStatus(null);
     try {
-      const result = await syncWithSupabase();
-      setSyncStatus(result);
-      await checkSupabaseStatus();
       await loadStats();
-    } catch (error) {
-      setSyncStatus({ success: false, message: error.message || 'Erro ao sincronizar' });
       await checkSupabaseStatus();
+      window.dispatchEvent(new CustomEvent('db:updated'));
+      setRefreshStatus({ success: true, message: 'Dados atualizados' });
+    } catch (error) {
+      setRefreshStatus({ success: false, message: error.message || 'Erro ao atualizar' });
     } finally {
-      setIsSyncing(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -117,16 +108,9 @@ function DashboardPage({ technician, onLogout }) {
           <span>{supabaseStatus.message}</span>
         </div>
 
-        {syncStatus && (
-          <div className={`sync-status ${syncStatus.success ? 'success' : 'error'}`}>
-            {syncStatus.success ? '✓' : '✕'} {syncStatus.message}
-            {syncStatus.errors?.length > 0 && (
-              <ul className="sync-error-list">
-                {syncStatus.errors.map((error, index) => (
-                  <li key={`${error}-${index}`}>{error}</li>
-                ))}
-              </ul>
-            )}
+        {refreshStatus && (
+          <div className={`sync-status ${refreshStatus.success ? 'success' : 'error'}`}>
+            {refreshStatus.success ? '✓' : '✕'} {refreshStatus.message}
           </div>
         )}
 
@@ -150,31 +134,22 @@ function DashboardPage({ technician, onLogout }) {
           </div>
         </div>
 
-        <button 
+        <button
           className="btn btn-primary btn-block"
-          onClick={handleSync}
-          disabled={isSyncing || !online}
+          onClick={handleRefresh}
+          disabled={isRefreshing || !online}
         >
-          {isSyncing ? '⏳ Sincronizando...' : '🔄 Sincronizar Agora'}
+          {isRefreshing ? '⏳ Atualizando...' : '🔄 Atualizar Dados'}
         </button>
 
         <div className="dashboard-actions">
-          <button
-            className="btn btn-secondary btn-block"
-            onClick={() => navigate('/buildings')}
-          >
-            ➕ Novo Prédio
+          <button className="btn btn-secondary btn-block" onClick={() => navigate('/buildings')}>
+            🏢 Ver Prédios
           </button>
-          <button
-            className="btn btn-secondary btn-block"
-            onClick={() => navigate('/ctos')}
-          >
-            ➕ Nova Caixa CTO
+          <button className="btn btn-secondary btn-block" onClick={() => navigate('/ctos')}>
+            📦 Ver Caixas CTO
           </button>
-          <button
-            className="btn btn-secondary btn-block"
-            onClick={() => navigate('/changes')}
-          >
+          <button className="btn btn-secondary btn-block" onClick={() => navigate('/changes')}>
             📋 Ver Mudanças
           </button>
         </div>
@@ -182,10 +157,9 @@ function DashboardPage({ technician, onLogout }) {
         <div className="dashboard-help">
           <h3>ℹ️ Informações</h3>
           <ul>
-            <li>Os dados são salvos localmente no seu aparelho</li>
-            <li>A sincronização ocorre automaticamente quando conectado</li>
-            <li>Você pode continuar trabalhando mesmo sem internet</li>
-            <li>Clique em "Sincronizar Agora" para forçar a sincronização</li>
+            <li>Todos os dados são carregados diretamente do Supabase</li>
+            <li>Alterações aparecem em tempo real em todos os dispositivos</li>
+            <li>Conexão com internet é necessária para usar o sistema</li>
           </ul>
         </div>
       </div>

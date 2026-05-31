@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { db, getAuditLogs } from '../db/dexie';
+import { getAuditLogs } from '../db/dexie';
+import { fetchBuildings, fetchCTOs, fetchAuditLogs, fromSupabaseBuilding, fromSupabaseCTO, isOnline, isSupabaseConfigured } from '../services/supabase';
 import './ChangesPage.css';
 
 const ACTION_LABELS = {
@@ -42,17 +43,34 @@ function ChangesPage() {
 
   const loadChanges = async () => {
     try {
-      const [auditLogs, buildingsData, ctosData] = await Promise.all([
-        getAuditLogs(),
-        db.buildings.toArray(),
-        db.ctos.toArray()
-      ]);
-
-      setLogs(auditLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
-      setBuildings(buildingsData);
-      setCTOs(ctosData);
+      if (isOnline() && isSupabaseConfigured()) {
+        const [remoteLogs, buildingsData, ctosData] = await Promise.all([
+          fetchAuditLogs(),
+          fetchBuildings(),
+          fetchCTOs()
+        ]);
+        const mapped = remoteLogs.map(log => ({
+          id: log.id,
+          buildingId: log.building_id,
+          ctoId: log.cto_id,
+          action: log.action,
+          technician: log.technician || '',
+          registration: log.registration || '',
+          details: log.details || '',
+          timestamp: new Date(log.timestamp)
+        }));
+        setLogs(mapped.sort((a, b) => b.timestamp - a.timestamp));
+        setBuildings(buildingsData.map(fromSupabaseBuilding));
+        setCTOs(ctosData.map(fromSupabaseCTO));
+      } else {
+        // fallback: apenas logs locais
+        const localLogs = await getAuditLogs();
+        setLogs(localLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
+      }
     } catch (error) {
       console.error('Error loading changes:', error);
+      const localLogs = await getAuditLogs();
+      setLogs(localLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
     }
   };
 

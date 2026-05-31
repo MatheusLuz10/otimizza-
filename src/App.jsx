@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { getTechnician } from './db/dexie';
-import { setupAutoSync, startPeriodicSync, setupRealtimeSync } from './services/sync';
+import { setupRealtimeSync } from './services/sync';
 
 // Pages
 import LoginPage from './pages/LoginPage';
@@ -113,8 +113,6 @@ function App() {
       setIsLoading(false);
 
       if (tech) {
-        setupAutoSync();
-        startPeriodicSync();
         setupRealtimeSync();
       }
     };
@@ -124,8 +122,6 @@ function App() {
 
   const handleLogin = (tech) => {
     setTechnician(tech);
-    setupAutoSync();
-    startPeriodicSync();
     setupRealtimeSync();
   };
 

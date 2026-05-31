@@ -46,6 +46,7 @@ export const toSupabaseBuilding = (building) => ({
 });
 
 export const fromSupabaseBuilding = (building) => ({
+  id: building.id,
   remoteId: building.id,
   name: building.name,
   address: building.address || '',
@@ -73,10 +74,11 @@ export const toSupabaseCTO = (cto, remoteBuildingId) => ({
   synced_at: new Date().toISOString()
 });
 
-export const fromSupabaseCTO = (cto, localBuildingId) => ({
+export const fromSupabaseCTO = (cto) => ({
+  id: cto.id,
   remoteId: cto.id,
   code: cto.code,
-  buildingId: localBuildingId,
+  buildingId: cto.building_id,
   floor: cto.floor || '',
   power: cto.power || '',
   ports: cto.ports ?? null,
