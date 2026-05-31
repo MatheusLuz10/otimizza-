@@ -145,6 +145,23 @@ export const logAudit = async (action, technician, registration, buildingId = nu
   });
 };
 
+export const safeLogAudit = async (...args) => {
+  try {
+    return await logAudit(...args);
+  } catch (error) {
+    console.warn('Audit log was not saved:', error);
+    return null;
+  }
+};
+
+export const describeFieldChanges = (before = {}, after = {}, labels = {}) => {
+  const changes = Object.keys(labels)
+    .filter(field => String(before?.[field] ?? '') !== String(after?.[field] ?? ''))
+    .map(field => `${labels[field]}: "${before?.[field] ?? ''}" -> "${after?.[field] ?? ''}"`);
+
+  return changes.length > 0 ? changes.join('; ') : 'Sem alterações de campos';
+};
+
 export const getAuditLogs = async (buildingId = null, ctoId = null) => {
   if (ctoId) {
     return db.auditLogs.where('ctoId').equals(ctoId).toArray();

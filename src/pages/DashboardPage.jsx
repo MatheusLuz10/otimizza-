@@ -22,7 +22,13 @@ function DashboardPage({ technician, onLogout }) {
     checkSupabaseStatus();
     const cleanupOnlineListener = setupOnlineListener();
 
-    return cleanupOnlineListener;
+    const handleDbUpdate = () => loadStats();
+    window.addEventListener('db:updated', handleDbUpdate);
+
+    return () => {
+      cleanupOnlineListener();
+      window.removeEventListener('db:updated', handleDbUpdate);
+    };
   }, []);
 
   const setupOnlineListener = () => {

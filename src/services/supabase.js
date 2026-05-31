@@ -236,3 +236,15 @@ export const fetchCTOsByBuilding = async (buildingId) => {
   if (error) throw error;
   return data || [];
 };
+
+export const setupRealtimeSubscriptions = (callback) => {
+  if (!supabase) return () => {};
+
+  const channel = supabase
+    .channel('db-realtime-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'buildings' }, callback)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'ctos' }, callback)
+    .subscribe();
+
+  return () => supabase.removeChannel(channel);
+};

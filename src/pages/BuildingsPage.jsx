@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, saveSyncQueue } from '../db/dexie';
+import { db, describeFieldChanges, safeLogAudit, saveSyncQueue } from '../db/dexie';
 import './BuildingsPage.css';
 
 function BuildingsPage({ technician }) {
@@ -15,6 +15,9 @@ function BuildingsPage({ technician }) {
 
   useEffect(() => {
     loadBuildings();
+    const handleDbUpdate = () => loadBuildings();
+    window.addEventListener('db:updated', handleDbUpdate);
+    return () => window.removeEventListener('db:updated', handleDbUpdate);
   }, []);
 
   useEffect(() => {
@@ -76,6 +79,18 @@ function BuildingsPage({ technician }) {
         
         await db.buildings.update(editingId, updates);
         await saveSyncQueue('building', 'update', editingId, updates);
+        await safeLogAudit(
+          'update_building',
+          technician.name,
+          technician.registration,
+          editingId,
+          null,
+          describeFieldChanges(building, updates, {
+            name: 'Nome',
+            address: 'Endereço',
+            observations: 'Observações'
+          })
+        );
       } else {
         // Create
         const newBuilding = {
@@ -88,14 +103,26 @@ function BuildingsPage({ technician }) {
         
         const id = await db.buildings.add(newBuilding);
         await saveSyncQueue('building', 'create', id, newBuilding);
+        await safeLogAudit(
+          'create_building',
+          technician.name,
+          technician.registration,
+          id,
+          null,
+          `Prédio "${newBuilding.name}" criado`
+        );
       }
 
       setFormData({ name: '', address: '', observations: '' });
       setEditingId(null);
       setShowForm(false);
       await loadBuildings();
+      window.dispatchEvent(new CustomEvent('db:updated'));
     } catch (error) {
-      alert('Erro ao salvar prédio');
+      const message = error?.name === 'ConstraintError'
+        ? 'Ja existe um predio com esse nome.'
+        : `Erro ao salvar predio: ${error?.message || 'verifique os dados informados'}`;
+      alert(message);
       console.error('Error saving building:', error);
     } finally {
       setIsLoading(false);
@@ -121,7 +148,16 @@ function BuildingsPage({ technician }) {
       const building = await db.buildings.get(id);
       await db.buildings.delete(id);
       await saveSyncQueue('building', 'delete', id, { remoteId: building?.remoteId || null });
+      await safeLogAudit(
+        'delete_building',
+        technician.name,
+        technician.registration,
+        id,
+        null,
+        `Prédio "${building?.name || id}" deletado`
+      );
       await loadBuildings();
+      window.dispatchEvent(new CustomEvent('db:updated'));
     } catch (error) {
       alert('Erro ao deletar prédio');
       console.error('Error deleting building:', error);

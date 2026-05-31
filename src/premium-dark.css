@@ -15,9 +15,9 @@
   --premium-primary-light: #5A94E9;
   --premium-primary-dark: #3A74C9;
   --premium-accent: #5A94E9;
-  --premium-text: #E6EAF2;
-  --premium-text-secondary: #98A2B3;
-  --premium-text-tertiary: #6B7585;
+  --premium-text: #F0F4FF;
+  --premium-text-secondary: #C2CEDE;
+  --premium-text-tertiary: #8FA0B4;
   --premium-border: rgba(255,255,255,0.05);
   --premium-border-light: rgba(255,255,255,0.08);
   --premium-success: #3FA37C;
@@ -620,7 +620,11 @@ html, body, #root {
   color: var(--premium-text-secondary);
   text-decoration: none;
   font-size: 11px;
+  font-weight: 500;
   border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
   transition: all 0.25s ease;
   position: relative;
 }

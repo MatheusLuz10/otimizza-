@@ -187,6 +187,10 @@ export const pullFromSupabase = async () => {
     errorCount++;
   }
 
+  if (importedCount > 0) {
+    window.dispatchEvent(new CustomEvent('db:updated'));
+  }
+
   return {
     success: errorCount === 0,
     importedCount,
@@ -203,6 +207,16 @@ export const setupAutoSync = () => {
 };
 
 let periodicSyncId = null;
+
+export const setupRealtimeSync = () => {
+  if (!supabaseService.isSupabaseConfigured()) return () => {};
+
+  return supabaseService.setupRealtimeSubscriptions(async () => {
+    if (supabaseService.isOnline()) {
+      await pullFromSupabase();
+    }
+  });
+};
 
 export const startPeriodicSync = (intervalMs = 30000) => {
   if (periodicSyncId) return periodicSyncId;
