@@ -149,6 +149,19 @@ export const createBuilding = async (building) => {
   return data;
 };
 
+export const findBuildingByName = async (name) => {
+  if (!name) return null;
+
+  const { data, error } = await requireClient()
+    .from('buildings')
+    .select('*')
+    .eq('name', name)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+};
+
 export const updateBuilding = async (remoteId, updates) => {
   const { data, error } = await requireClient()
     .from('buildings')
@@ -188,6 +201,19 @@ export const createCTO = async (cto, remoteBuildingId) => {
     .insert([toSupabaseCTO(stripLocalFields(cto), remoteBuildingId)])
     .select()
     .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const findCTOByCode = async (code) => {
+  if (!code) return null;
+
+  const { data, error } = await requireClient()
+    .from('ctos')
+    .select('*')
+    .eq('code', code)
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -235,4 +261,53 @@ export const fetchCTOsByBuilding = async (buildingId) => {
 
   if (error) throw error;
   return data || [];
+};
+
+export const pushAuditLog = async (log) => {
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from('audit_logs')
+    .insert([{
+      building_id: log.buildingId || null,
+      cto_id: log.ctoId || null,
+      action: log.action,
+      technician: log.technician || null,
+      registration: log.registration || null,
+      details: log.details || null,
+      timestamp: log.timestamp ? new Date(log.timestamp).toISOString() : new Date().toISOString(),
+      created_at: new Date().toISOString()
+    }])
+    .select()
+    .single();
+
+  if (error) {
+    console.warn('Erro ao salvar audit log remoto:', error.message);
+    return null;
+  }
+  return data;
+};
+
+export const fetchAuditLogs = async () => {
+  const { data, error } = await requireClient()
+    .from('audit_logs')
+    .select('*')
+    .order('timestamp', { ascending: false })
+    .limit(500);
+
+  if (error) throw error;
+  return data || [];
+};
+
+export const setupRealtimeSubscriptions = (callback) => {
+  if (!supabase) return () => {};
+
+  const channel = supabase
+    .channel('db-realtime-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'buildings' }, callback)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'ctos' }, callback)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'audit_logs' }, callback)
+    .subscribe();
+
+  return () => supabase.removeChannel(channel);
 };

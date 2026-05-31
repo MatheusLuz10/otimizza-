@@ -15,9 +15,9 @@
   --premium-primary-light: #5A94E9;
   --premium-primary-dark: #3A74C9;
   --premium-accent: #5A94E9;
-  --premium-text: #E6EAF2;
-  --premium-text-secondary: #98A2B3;
-  --premium-text-tertiary: #6B7585;
+  --premium-text: #F0F4FF;
+  --premium-text-secondary: #C2CEDE;
+  --premium-text-tertiary: #8FA0B4;
   --premium-border: rgba(255,255,255,0.05);
   --premium-border-light: rgba(255,255,255,0.08);
   --premium-success: #3FA37C;
@@ -69,6 +69,7 @@ html, body, #root {
 .page {
   background: linear-gradient(135deg, var(--premium-bg) 0%, #0F1117 100%);
   min-height: 100vh;
+  padding-bottom: 88px;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -268,6 +269,18 @@ html, body, #root {
 
 .btn-small {
   padding: 8px 12px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+.btn-sm {
+  padding: 10px 16px;
+  font-size: 13px;
+  border-radius: 7px;
+}
+
+.btn-xs {
+  padding: 7px 10px;
   font-size: 12px;
   border-radius: 6px;
 }
@@ -604,7 +617,9 @@ html, body, #root {
   border-top: 1px solid var(--premium-border);
   display: flex;
   justify-content: space-around;
-  padding: 8px 0;
+  align-items: center;
+  height: 68px;
+  padding: 0 8px env(safe-area-inset-bottom, 0);
   z-index: 100;
   backdrop-filter: blur(12px);
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
@@ -615,14 +630,20 @@ html, body, #root {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 8px;
+  gap: 2px;
+  padding: 8px 4px;
+  height: 60px;
   color: var(--premium-text-secondary);
   text-decoration: none;
-  font-size: 11px;
+  font-size: 10px;
+  font-weight: 500;
   border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
   transition: all 0.25s ease;
   position: relative;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .nav-item::before {
@@ -647,6 +668,27 @@ html, body, #root {
 
 .nav-item.active::before {
   opacity: 1;
+}
+
+.nav-icon {
+  font-size: 22px;
+  line-height: 1;
+  display: block;
+}
+
+.nav-item-new {
+  background: linear-gradient(135deg, var(--premium-primary) 0%, var(--premium-primary-dark) 100%) !important;
+  color: white !important;
+  border-radius: 14px !important;
+  height: 52px !important;
+  flex: 0 0 60px;
+  border-color: rgba(74, 132, 217, 0.5) !important;
+  box-shadow: 0 4px 16px rgba(74, 132, 217, 0.35) !important;
+}
+
+.nav-icon-new {
+  font-size: 20px;
+  line-height: 1;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -1060,7 +1102,7 @@ html, body, #root {
 
 .sticky-add-button {
   position: sticky;
-  bottom: 80px;
+  bottom: 88px;
   padding: 16px;
   background: rgba(24, 27, 35, 0.8);
   border-top: 1px solid var(--premium-border);

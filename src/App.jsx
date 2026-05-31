@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { getTechnician } from './db/dexie';
-import { setupAutoSync, startPeriodicSync } from './services/sync';
+import { setupAutoSync, startPeriodicSync, setupRealtimeSync } from './services/sync';
 
 // Pages
 import LoginPage from './pages/LoginPage';
@@ -9,8 +9,98 @@ import DashboardPage from './pages/DashboardPage';
 import BuildingsPage from './pages/BuildingsPage';
 import CTOsPage from './pages/CTOsPage';
 import BuildingDetailPage from './pages/BuildingDetailPage';
+import ChangesPage from './pages/ChangesPage';
 
 import './App.css';
+
+function BottomNav() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const isBuildingsActive = location.pathname === '/buildings' || location.pathname.startsWith('/buildings/');
+  const isCTOsActive = location.pathname === '/ctos';
+
+  const handleNew = () => {
+    const path = location.pathname;
+    if (path === '/buildings' || path === '/ctos' || path.startsWith('/buildings/')) {
+      window.dispatchEvent(new CustomEvent('bottomnav:new'));
+    } else {
+      navigate('/buildings', { state: { openForm: true } });
+    }
+  };
+
+  const handleSearch = () => {
+    if (!location.pathname.startsWith('/buildings') && location.pathname !== '/ctos') {
+      navigate('/buildings');
+    }
+    window.dispatchEvent(new CustomEvent('bottomnav:search'));
+  };
+
+  return (
+    <nav className="bottom-nav">
+      <button
+        className={`nav-item ${isBuildingsActive ? 'active' : ''}`}
+        onClick={() => navigate('/buildings')}
+      >
+        <span className="nav-icon">🏢</span>
+        <span>Prédios</span>
+      </button>
+      <button
+        className={`nav-item ${isCTOsActive ? 'active' : ''}`}
+        onClick={() => navigate('/ctos')}
+      >
+        <span className="nav-icon">📦</span>
+        <span>CTOs</span>
+      </button>
+      <button
+        className="nav-item nav-item-new"
+        onClick={handleNew}
+      >
+        <span className="nav-icon nav-icon-new">➕</span>
+        <span>Novo</span>
+      </button>
+      <button
+        className="nav-item"
+        onClick={handleSearch}
+      >
+        <span className="nav-icon">🔍</span>
+        <span>Buscar</span>
+      </button>
+      <button
+        className={`nav-item ${location.pathname === '/' ? 'active' : ''}`}
+        onClick={() => navigate('/')}
+      >
+        <span className="nav-icon">⚙️</span>
+        <span>Config</span>
+      </button>
+    </nav>
+  );
+}
+
+function AppRoutes({ technician, onLogin, onLogout }) {
+  if (!technician) {
+    return (
+      <Routes>
+        <Route path="/login" element={<LoginPage onLogin={onLogin} />} />
+        <Route path="*" element={<Navigate to="/login" />} />
+      </Routes>
+    );
+  }
+
+  return (
+    <>
+      <Routes>
+        <Route path="/" element={<DashboardPage technician={technician} onLogout={onLogout} />} />
+        <Route path="/buildings" element={<BuildingsPage technician={technician} />} />
+        <Route path="/buildings/:id" element={<BuildingDetailPage technician={technician} />} />
+        <Route path="/ctos" element={<CTOsPage technician={technician} />} />
+        <Route path="/changes" element={<ChangesPage />} />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+      <BottomNav />
+    </>
+  );
+}
 
 function App() {
   const [technician, setTechnician] = useState(null);
@@ -25,6 +115,7 @@ function App() {
       if (tech) {
         setupAutoSync();
         startPeriodicSync();
+        setupRealtimeSync();
       }
     };
 
@@ -35,6 +126,7 @@ function App() {
     setTechnician(tech);
     setupAutoSync();
     startPeriodicSync();
+    setupRealtimeSync();
   };
 
   const handleLogout = () => {
@@ -53,28 +145,7 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route 
-          path="/login" 
-          element={!technician ? <LoginPage onLogin={handleLogin} /> : <Navigate to="/" />} 
-        />
-        <Route 
-          path="/" 
-          element={technician ? <DashboardPage technician={technician} onLogout={handleLogout} /> : <Navigate to="/login" />} 
-        />
-        <Route 
-          path="/buildings" 
-          element={technician ? <BuildingsPage technician={technician} /> : <Navigate to="/login" />} 
-        />
-        <Route 
-          path="/buildings/:id" 
-          element={technician ? <BuildingDetailPage technician={technician} /> : <Navigate to="/login" />} 
-        />
-        <Route 
-          path="/ctos" 
-          element={technician ? <CTOsPage technician={technician} /> : <Navigate to="/login" />} 
-        />
-      </Routes>
+      <AppRoutes technician={technician} onLogin={handleLogin} onLogout={handleLogout} />
     </BrowserRouter>
   );
 }

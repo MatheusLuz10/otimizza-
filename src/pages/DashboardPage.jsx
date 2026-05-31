@@ -22,7 +22,13 @@ function DashboardPage({ technician, onLogout }) {
     checkSupabaseStatus();
     const cleanupOnlineListener = setupOnlineListener();
 
-    return cleanupOnlineListener;
+    const handleDbUpdate = () => loadStats();
+    window.addEventListener('db:updated', handleDbUpdate);
+
+    return () => {
+      cleanupOnlineListener();
+      window.removeEventListener('db:updated', handleDbUpdate);
+    };
   }, []);
 
   const setupOnlineListener = () => {
@@ -114,6 +120,13 @@ function DashboardPage({ technician, onLogout }) {
         {syncStatus && (
           <div className={`sync-status ${syncStatus.success ? 'success' : 'error'}`}>
             {syncStatus.success ? '✓' : '✕'} {syncStatus.message}
+            {syncStatus.errors?.length > 0 && (
+              <ul className="sync-error-list">
+                {syncStatus.errors.map((error, index) => (
+                  <li key={`${error}-${index}`}>{error}</li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
 
@@ -146,17 +159,23 @@ function DashboardPage({ technician, onLogout }) {
         </button>
 
         <div className="dashboard-actions">
-          <button 
+          <button
             className="btn btn-secondary btn-block"
             onClick={() => navigate('/buildings')}
           >
             ➕ Novo Prédio
           </button>
-          <button 
+          <button
             className="btn btn-secondary btn-block"
             onClick={() => navigate('/ctos')}
           >
             ➕ Nova Caixa CTO
+          </button>
+          <button
+            className="btn btn-secondary btn-block"
+            onClick={() => navigate('/changes')}
+          >
+            📋 Ver Mudanças
           </button>
         </div>
 

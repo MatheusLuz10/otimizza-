@@ -44,6 +44,7 @@ export const syncWithSupabase = async () => {
   const queue = await getSyncQueue();
   let successCount = 0;
   let errorCount = 0;
+  const errors = [];
 
   for (const item of queue) {
     try {
@@ -63,8 +64,10 @@ export const syncWithSupabase = async () => {
       await updateSyncQueueStatus(item.id, 'synced');
       await clearSyncQueue(item.id);
     } catch (error) {
+      const errorMessage = formatSyncError(error);
       console.error(`Erro ao sincronizar ${item.type} ${item.entityId}:`, error);
-      await updateSyncQueueStatus(item.id, 'error', error.message);
+      await updateSyncQueueStatus(item.id, 'error', errorMessage);
+      errors.push(`${getQueueItemLabel(item)}: ${errorMessage}`);
       errorCount++;
     }
   }
@@ -73,11 +76,35 @@ export const syncWithSupabase = async () => {
 
   return {
     success: errorCount === 0 && pullResult.success,
-    message: `${successCount} enviado(s), ${pullResult.importedCount} recebido(s), ${errorCount + pullResult.errorCount} erro(s)`,
+    message: buildSyncMessage(successCount, pullResult.importedCount, errorCount + pullResult.errorCount, errors),
     successCount,
     importedCount: pullResult.importedCount,
-    errorCount: errorCount + pullResult.errorCount
+    errorCount: errorCount + pullResult.errorCount,
+    errors
   };
+};
+
+const formatSyncError = (error) => {
+  return [error?.message, error?.details, error?.hint, error?.code]
+    .filter(Boolean)
+    .join(' - ') || 'Erro desconhecido';
+};
+
+const getQueueItemLabel = (item) => {
+  const entity = item.type === 'building' ? 'Predio' : 'CTO';
+  const action = {
+    create: 'criar',
+    update: 'atualizar',
+    delete: 'deletar'
+  }[item.operation] || item.operation;
+
+  return `${entity} ${item.entityId} (${action})`;
+};
+
+const buildSyncMessage = (sentCount, importedCount, errorCount, errors) => {
+  const summary = `${sentCount} enviado(s), ${importedCount} recebido(s), ${errorCount} erro(s)`;
+  if (errors.length === 0) return summary;
+  return `${summary}: ${errors[0]}`;
 };
 
 const syncBuilding = async (queueItem) => {
@@ -92,7 +119,8 @@ const syncBuilding = async (queueItem) => {
   if (!localBuilding) return;
 
   if (operation === 'create' || !localBuilding.remoteId) {
-    const remoteBuilding = await supabaseService.createBuilding(localBuilding);
+    const existingBuilding = await supabaseService.findBuildingByName(localBuilding.name);
+    const remoteBuilding = existingBuilding || await supabaseService.createBuilding(localBuilding);
     await markBuildingSynced(entityId, remoteBuilding);
     return;
   }
@@ -118,13 +146,41 @@ const syncCTO = async (queueItem) => {
   }
 
   if (operation === 'create' || !localCTO.remoteId) {
-    const remoteCTO = await supabaseService.createCTO(localCTO, remoteBuildingId);
+    const existingCTO = await supabaseService.findCTOByCode(localCTO.code);
+    const remoteCTO = existingCTO || await supabaseService.createCTO(localCTO, remoteBuildingId);
     await markCTOSynced(entityId, remoteCTO);
     return;
   }
 
   const remoteCTO = await supabaseService.updateCTO(localCTO.remoteId, localCTO, remoteBuildingId);
   await markCTOSynced(entityId, remoteCTO);
+};
+
+const pullAuditLogs = async () => {
+  try {
+    const remoteLogs = await supabaseService.fetchAuditLogs();
+    for (const remote of remoteLogs) {
+      const existing = await db.auditLogs
+        .where('timestamp').equals(new Date(remote.timestamp))
+        .and(log => log.technician === remote.technician && log.action === remote.action)
+        .first();
+
+      if (!existing) {
+        await db.auditLogs.add({
+          buildingId: remote.building_id || null,
+          ctoId: remote.cto_id || null,
+          action: remote.action,
+          technician: remote.technician || '',
+          registration: remote.registration || '',
+          details: remote.details || '',
+          timestamp: new Date(remote.timestamp),
+          createdAt: new Date(remote.created_at)
+        });
+      }
+    }
+  } catch {
+    // audit_logs table may not exist yet — silent fail
+  }
 };
 
 export const pullFromSupabase = async () => {
@@ -182,9 +238,16 @@ export const pullFromSupabase = async () => {
         importedCount++;
       }
     }
+
+    // Sincronizar audit_logs remotos para o dispositivo local
+    await pullAuditLogs();
   } catch (error) {
     console.error('Erro ao importar dados do Supabase:', error);
     errorCount++;
+  }
+
+  if (importedCount > 0) {
+    window.dispatchEvent(new CustomEvent('db:updated'));
   }
 
   return {
@@ -202,7 +265,29 @@ export const setupAutoSync = () => {
   });
 };
 
+export const syncAfterLocalChange = async () => {
+  window.dispatchEvent(new CustomEvent('db:updated'));
+
+  if (!supabaseService.isOnline() || !supabaseService.isSupabaseConfigured()) {
+    return { success: false, message: 'Sincronizacao remota adiada' };
+  }
+
+  const result = await syncWithSupabase();
+  window.dispatchEvent(new CustomEvent('db:updated'));
+  return result;
+};
+
 let periodicSyncId = null;
+
+export const setupRealtimeSync = () => {
+  if (!supabaseService.isSupabaseConfigured()) return () => {};
+
+  return supabaseService.setupRealtimeSubscriptions(async () => {
+    if (supabaseService.isOnline()) {
+      await pullFromSupabase();
+    }
+  });
+};
 
 export const startPeriodicSync = (intervalMs = 30000) => {
   if (periodicSyncId) return periodicSyncId;

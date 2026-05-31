@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { db, logAudit, saveSyncQueue } from '../db/dexie';
+import { db, describeFieldChanges, safeLogAudit, saveSyncQueue } from '../db/dexie';
+import { syncAfterLocalChange } from '../services/sync';
 import './BuildingDetailPage.css';
 
 function BuildingDetailPage({ technician }) {
@@ -24,6 +25,17 @@ function BuildingDetailPage({ technician }) {
   useEffect(() => {
     loadData();
   }, [id]);
+
+  useEffect(() => {
+    const handleDbUpdate = () => loadData();
+    const handleNavNew = () => setShowCTOForm(true);
+    window.addEventListener('db:updated', handleDbUpdate);
+    window.addEventListener('bottomnav:new', handleNavNew);
+    return () => {
+      window.removeEventListener('db:updated', handleDbUpdate);
+      window.removeEventListener('bottomnav:new', handleNavNew);
+    };
+  }, []);
 
   const loadData = async () => {
     try {
@@ -63,6 +75,7 @@ function BuildingDetailPage({ technician }) {
 
       if (editingCTOId) {
         // Update
+        const previousCTO = await db.ctos.get(editingCTOId);
         const ctoData = {
           ...formData,
           updatedAt: now,
@@ -71,13 +84,20 @@ function BuildingDetailPage({ technician }) {
 
         await db.ctos.update(editingCTOId, ctoData);
         await saveSyncQueue('cto', 'update', editingCTOId, ctoData);
-        await logAudit(
+        await safeLogAudit(
           'update_cto',
           technician.name,
           technician.registration,
           buildingId,
           editingCTOId,
-          `Caixa ${formData.code} atualizada`
+          describeFieldChanges(previousCTO, ctoData, {
+            code: 'Código',
+            floor: 'Andar',
+            power: 'Potência',
+            splitter: 'Splitter',
+            technicalInfo: 'Informações técnicas',
+            observations: 'Observações'
+          })
         );
       } else {
         // Create
@@ -92,7 +112,7 @@ function BuildingDetailPage({ technician }) {
 
         const ctoId = await db.ctos.add(newCTO);
         await saveSyncQueue('cto', 'create', ctoId, newCTO);
-        await logAudit(
+        await safeLogAudit(
           'create_cto',
           technician.name,
           technician.registration,
@@ -113,8 +133,12 @@ function BuildingDetailPage({ technician }) {
       setEditingCTOId(null);
       setShowCTOForm(false);
       await loadData();
+      await syncAfterLocalChange();
     } catch (error) {
-      alert('Erro ao salvar caixa');
+      const message = error?.name === 'ConstraintError'
+        ? 'Ja existe uma caixa com esse codigo.'
+        : `Erro ao salvar caixa: ${error?.message || 'verifique os dados informados'}`;
+      alert(message);
       console.error('Error saving CTO:', error);
     } finally {
       setIsSaving(false);
@@ -143,7 +167,7 @@ function BuildingDetailPage({ technician }) {
       const cto = await db.ctos.get(ctoId);
       await db.ctos.delete(ctoId);
       await saveSyncQueue('cto', 'delete', ctoId, { remoteId: cto?.remoteId || null });
-      await logAudit(
+      await safeLogAudit(
         'delete_cto',
         technician.name,
         technician.registration,
@@ -152,6 +176,7 @@ function BuildingDetailPage({ technician }) {
         `Caixa ${ctoCode} deletada`
       );
       await loadData();
+      await syncAfterLocalChange();
     } catch (error) {
       alert('Erro ao deletar caixa');
       console.error('Error deleting CTO:', error);

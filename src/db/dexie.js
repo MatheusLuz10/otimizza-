@@ -1,4 +1,5 @@
 import Dexie from 'dexie';
+import { pushAuditLog } from '../services/supabase';
 
 export const db = new Dexie('CTOManagerDB');
 
@@ -143,6 +144,27 @@ export const logAudit = async (action, technician, registration, buildingId = nu
     timestamp: new Date(),
     createdAt: new Date()
   });
+};
+
+export const safeLogAudit = async (...args) => {
+  try {
+    const id = await logAudit(...args);
+    const log = await db.auditLogs.get(id);
+    // Push to Supabase in background — non-blocking
+    pushAuditLog(log).catch(() => {});
+    return id;
+  } catch (error) {
+    console.warn('Audit log was not saved:', error);
+    return null;
+  }
+};
+
+export const describeFieldChanges = (before = {}, after = {}, labels = {}) => {
+  const changes = Object.keys(labels)
+    .filter(field => String(before?.[field] ?? '') !== String(after?.[field] ?? ''))
+    .map(field => `${labels[field]}: "${before?.[field] ?? ''}" -> "${after?.[field] ?? ''}"`);
+
+  return changes.length > 0 ? changes.join('; ') : 'Sem alterações de campos';
 };
 
 export const getAuditLogs = async (buildingId = null, ctoId = null) => {
