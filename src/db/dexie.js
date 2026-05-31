@@ -1,4 +1,5 @@
 import Dexie from 'dexie';
+import { pushAuditLog } from '../services/supabase';
 
 export const db = new Dexie('CTOManagerDB');
 
@@ -147,7 +148,11 @@ export const logAudit = async (action, technician, registration, buildingId = nu
 
 export const safeLogAudit = async (...args) => {
   try {
-    return await logAudit(...args);
+    const id = await logAudit(...args);
+    const log = await db.auditLogs.get(id);
+    // Push to Supabase in background — non-blocking
+    pushAuditLog(log).catch(() => {});
+    return id;
   } catch (error) {
     console.warn('Audit log was not saved:', error);
     return null;

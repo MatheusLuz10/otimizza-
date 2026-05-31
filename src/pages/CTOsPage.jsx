@@ -31,6 +31,19 @@ function CTOsPage({ technician }) {
     filterCTOs();
   }, [ctos, searchTerm, filterBuilding]);
 
+  useEffect(() => {
+    const handleNavNew = () => setShowForm(true);
+    const handleNavSearch = () => {
+      setTimeout(() => document.querySelector('.search-box input')?.focus(), 100);
+    };
+    window.addEventListener('bottomnav:new', handleNavNew);
+    window.addEventListener('bottomnav:search', handleNavSearch);
+    return () => {
+      window.removeEventListener('bottomnav:new', handleNavNew);
+      window.removeEventListener('bottomnav:search', handleNavSearch);
+    };
+  }, []);
+
   const loadData = async () => {
     try {
       const buildingsData = await db.buildings.toArray();

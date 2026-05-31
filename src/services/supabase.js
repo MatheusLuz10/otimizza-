@@ -263,6 +263,42 @@ export const fetchCTOsByBuilding = async (buildingId) => {
   return data || [];
 };
 
+export const pushAuditLog = async (log) => {
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from('audit_logs')
+    .insert([{
+      building_id: log.buildingId || null,
+      cto_id: log.ctoId || null,
+      action: log.action,
+      technician: log.technician || null,
+      registration: log.registration || null,
+      details: log.details || null,
+      timestamp: log.timestamp ? new Date(log.timestamp).toISOString() : new Date().toISOString(),
+      created_at: new Date().toISOString()
+    }])
+    .select()
+    .single();
+
+  if (error) {
+    console.warn('Erro ao salvar audit log remoto:', error.message);
+    return null;
+  }
+  return data;
+};
+
+export const fetchAuditLogs = async () => {
+  const { data, error } = await requireClient()
+    .from('audit_logs')
+    .select('*')
+    .order('timestamp', { ascending: false })
+    .limit(500);
+
+  if (error) throw error;
+  return data || [];
+};
+
 export const setupRealtimeSubscriptions = (callback) => {
   if (!supabase) return () => {};
 
@@ -270,6 +306,7 @@ export const setupRealtimeSubscriptions = (callback) => {
     .channel('db-realtime-changes')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'buildings' }, callback)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'ctos' }, callback)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'audit_logs' }, callback)
     .subscribe();
 
   return () => supabase.removeChannel(channel);

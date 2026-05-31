@@ -17,30 +17,62 @@ function BottomNav() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const navItems = [
-    { path: '/', icon: '🏠', label: 'Dashboard', exact: true },
-    { path: '/buildings', icon: '🏢', label: 'Prédios', exact: false },
-    { path: '/ctos', icon: '📦', label: 'CTOs', exact: false },
-    { path: '/changes', icon: 'M', label: 'Mudanças', exact: false },
-  ];
+  const isBuildingsActive = location.pathname === '/buildings' || location.pathname.startsWith('/buildings/');
+  const isCTOsActive = location.pathname === '/ctos';
 
-  const isActive = (item) => {
-    if (item.exact) return location.pathname === item.path;
-    return location.pathname.startsWith(item.path);
+  const handleNew = () => {
+    const path = location.pathname;
+    if (path === '/buildings' || path === '/ctos' || path.startsWith('/buildings/')) {
+      window.dispatchEvent(new CustomEvent('bottomnav:new'));
+    } else {
+      navigate('/buildings', { state: { openForm: true } });
+    }
+  };
+
+  const handleSearch = () => {
+    if (!location.pathname.startsWith('/buildings') && location.pathname !== '/ctos') {
+      navigate('/buildings');
+    }
+    window.dispatchEvent(new CustomEvent('bottomnav:search'));
   };
 
   return (
     <nav className="bottom-nav">
-      {navItems.map(item => (
-        <button
-          key={item.path}
-          className={`nav-item ${isActive(item) ? 'active' : ''}`}
-          onClick={() => navigate(item.path)}
-        >
-          <span style={{ fontSize: '20px' }}>{item.icon}</span>
-          <span>{item.label}</span>
-        </button>
-      ))}
+      <button
+        className={`nav-item ${isBuildingsActive ? 'active' : ''}`}
+        onClick={() => navigate('/buildings')}
+      >
+        <span className="nav-icon">🏢</span>
+        <span>Prédios</span>
+      </button>
+      <button
+        className={`nav-item ${isCTOsActive ? 'active' : ''}`}
+        onClick={() => navigate('/ctos')}
+      >
+        <span className="nav-icon">📦</span>
+        <span>CTOs</span>
+      </button>
+      <button
+        className="nav-item nav-item-new"
+        onClick={handleNew}
+      >
+        <span className="nav-icon nav-icon-new">➕</span>
+        <span>Novo</span>
+      </button>
+      <button
+        className="nav-item"
+        onClick={handleSearch}
+      >
+        <span className="nav-icon">🔍</span>
+        <span>Buscar</span>
+      </button>
+      <button
+        className={`nav-item ${location.pathname === '/' ? 'active' : ''}`}
+        onClick={() => navigate('/')}
+      >
+        <span className="nav-icon">⚙️</span>
+        <span>Config</span>
+      </button>
     </nav>
   );
 }

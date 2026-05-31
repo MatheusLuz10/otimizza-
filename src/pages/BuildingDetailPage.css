@@ -1,60 +1,80 @@
+/* ═════════════════════════════════════════════════════════════════════════════
+   BUILDING DETAIL PAGE - Complete CSS
+   All classes used in BuildingDetailPage.jsx
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   BACK BUTTON
+   ───────────────────────────────────────────────────────────────────────────── */
+
 .btn-back {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 8px 12px;
-  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 8px 14px;
+  border-radius: 6px;
   font-size: 14px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 600;
+  transition: all 0.2s ease;
+  font-weight: 700;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .btn-back:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   BUILDING INFO CARD
+   ───────────────────────────────────────────────────────────────────────────── */
+
 .building-info-card {
-  background: var(--surface);
+  background: rgba(31, 36, 48, 0.4);
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 24px;
-  box-shadow: var(--shadow);
-  border-left: 4px solid var(--primary-color);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--premium-border);
+  border-left: 4px solid var(--premium-primary);
+  backdrop-filter: blur(8px);
 }
 
 .building-name {
   font-size: 22px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--premium-text);
   margin: 0 0 8px 0;
 }
 
 .building-address {
   font-size: 14px;
-  color: var(--text-secondary);
+  color: var(--premium-text-secondary);
   margin: 0 0 16px 0;
 }
 
 .building-observations {
-  background: #f5f5f5;
+  background: rgba(74, 132, 217, 0.08);
   border-radius: 6px;
   padding: 12px;
   margin: 12px 0;
-  border-left: 2px solid var(--primary-color);
+  border-left: 2px solid var(--premium-primary);
 }
 
 .building-observations h4 {
   font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-weight: 700;
+  color: var(--premium-primary);
   margin: 0 0 6px 0;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .building-observations p {
   font-size: 13px;
-  color: var(--text-primary);
+  color: var(--premium-text);
   margin: 0;
   line-height: 1.5;
 }
@@ -65,7 +85,7 @@
   gap: 12px;
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid var(--premium-border);
 }
 
 .meta-item {
@@ -76,68 +96,248 @@
 
 .meta-label {
   font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-weight: 700;
+  color: var(--premium-text-secondary);
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .meta-value {
   font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-weight: 700;
+  color: var(--premium-primary);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CTOS SECTION
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.ctos-section {
+  display: block;
+  margin-bottom: 24px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
 }
 
 .section-title {
   font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 24px 0 16px 0;
-  padding-bottom: 12px;
-  border-bottom: 2px solid var(--primary-color);
+  font-weight: 700;
+  color: var(--premium-text);
+  margin: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+  letter-spacing: -0.3px;
 }
 
-.ctos-list {
+/* ─────────────────────────────────────────────────────────────────────────────
+   BUTTON SIZE VARIANTS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.btn-sm {
+  padding: 10px 16px;
+  font-size: 13px;
+  border-radius: 7px;
+  min-height: 44px;
+}
+
+.btn-xs {
+  padding: 7px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+  min-height: 36px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CTO CARDS GRID
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.ctos-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
   margin-bottom: 16px;
 }
 
-.cto-details {
-  display: flex;
-  gap: 12px;
-  margin: 12px 0;
-  flex-wrap: wrap;
+.cto-card {
+  background: rgba(31, 36, 48, 0.4);
+  border: 1px solid var(--premium-border);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(8px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
-.detail-item {
+.cto-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(74, 132, 217, 0.05) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.cto-card:hover {
+  background: rgba(31, 36, 48, 0.6);
+  border-color: var(--premium-border-light);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.cto-card:hover::before {
+  opacity: 1;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CTO CARD HEADER
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.cto-header {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.cto-code {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--premium-primary);
+  letter-spacing: -0.3px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CTO INFO ROWS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.cto-info {
+  display: flex;
+  flex-direction: column;
   gap: 6px;
+  margin-bottom: 12px;
+}
+
+.info-row {
+  display: flex;
+  gap: 8px;
   align-items: center;
   font-size: 13px;
 }
 
-.detail-label {
-  color: var(--text-secondary);
-  font-weight: 600;
+.info-label {
+  color: var(--premium-text-secondary);
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
-.detail-value {
-  color: var(--text-primary);
-  background: #f5f5f5;
+.info-value {
+  color: var(--premium-text);
+  background: rgba(74, 132, 217, 0.1);
   padding: 2px 8px;
   border-radius: 4px;
-  font-weight: 500;
+  font-weight: 600;
+  border: 1px solid rgba(74, 132, 217, 0.2);
 }
 
-.card-observations {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin: 12px 0 0 0;
-  padding: 8px;
-  background: #f5f5f5;
-  border-radius: 4px;
-  border-left: 2px solid var(--text-secondary);
+/* ─────────────────────────────────────────────────────────────────────────────
+   TECHNICAL INFO BLOCK
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.technical-info {
+  background: rgba(74, 132, 217, 0.06);
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-left: 2px solid var(--premium-primary);
 }
 
-@media (max-width: 480px) {
+.tech-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--premium-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.tech-content {
+  font-size: 12px;
+  color: var(--premium-text-secondary);
+  line-height: 1.5;
+  font-family: 'Monaco', 'Courier New', monospace;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   OBSERVATIONS BLOCK (CTO-level, different from building-observations)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.observations {
+  background: rgba(212, 165, 71, 0.06);
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-left: 2px solid var(--premium-warning);
+}
+
+.obs-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--premium-warning);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.obs-content {
+  font-size: 12px;
+  color: var(--premium-text-secondary);
+  line-height: 1.5;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CTO ACTIONS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.cto-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--premium-border);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   FORM GRID - 2-column layout for form fields
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   RESPONSIVE ADJUSTMENTS
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .ctos-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
   .building-meta {
     grid-template-columns: 1fr;
     gap: 8px;
@@ -151,7 +351,22 @@
     font-size: 18px;
   }
 
-  .section-title {
+  .cto-card {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .section-header {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .cto-code {
     font-size: 14px;
+  }
+
+  .cto-actions {
+    gap: 6px;
   }
 }

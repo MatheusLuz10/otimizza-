@@ -159,17 +159,23 @@ function DashboardPage({ technician, onLogout }) {
         </button>
 
         <div className="dashboard-actions">
-          <button 
+          <button
             className="btn btn-secondary btn-block"
             onClick={() => navigate('/buildings')}
           >
             ➕ Novo Prédio
           </button>
-          <button 
+          <button
             className="btn btn-secondary btn-block"
             onClick={() => navigate('/ctos')}
           >
             ➕ Nova Caixa CTO
+          </button>
+          <button
+            className="btn btn-secondary btn-block"
+            onClick={() => navigate('/changes')}
+          >
+            📋 Ver Mudanças
           </button>
         </div>
 

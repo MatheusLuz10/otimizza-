@@ -156,6 +156,33 @@ const syncCTO = async (queueItem) => {
   await markCTOSynced(entityId, remoteCTO);
 };
 
+const pullAuditLogs = async () => {
+  try {
+    const remoteLogs = await supabaseService.fetchAuditLogs();
+    for (const remote of remoteLogs) {
+      const existing = await db.auditLogs
+        .where('timestamp').equals(new Date(remote.timestamp))
+        .and(log => log.technician === remote.technician && log.action === remote.action)
+        .first();
+
+      if (!existing) {
+        await db.auditLogs.add({
+          buildingId: remote.building_id || null,
+          ctoId: remote.cto_id || null,
+          action: remote.action,
+          technician: remote.technician || '',
+          registration: remote.registration || '',
+          details: remote.details || '',
+          timestamp: new Date(remote.timestamp),
+          createdAt: new Date(remote.created_at)
+        });
+      }
+    }
+  } catch {
+    // audit_logs table may not exist yet — silent fail
+  }
+};
+
 export const pullFromSupabase = async () => {
   if (!supabaseService.isSupabaseConfigured() || !supabaseService.isOnline()) {
     return { success: false, importedCount: 0, errorCount: 0 };
@@ -211,6 +238,9 @@ export const pullFromSupabase = async () => {
         importedCount++;
       }
     }
+
+    // Sincronizar audit_logs remotos para o dispositivo local
+    await pullAuditLogs();
   } catch (error) {
     console.error('Erro ao importar dados do Supabase:', error);
     errorCount++;

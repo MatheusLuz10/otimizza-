@@ -26,6 +26,17 @@ function BuildingDetailPage({ technician }) {
     loadData();
   }, [id]);
 
+  useEffect(() => {
+    const handleDbUpdate = () => loadData();
+    const handleNavNew = () => setShowCTOForm(true);
+    window.addEventListener('db:updated', handleDbUpdate);
+    window.addEventListener('bottomnav:new', handleNavNew);
+    return () => {
+      window.removeEventListener('db:updated', handleDbUpdate);
+      window.removeEventListener('bottomnav:new', handleNavNew);
+    };
+  }, []);
+
   const loadData = async () => {
     try {
       const buildingData = await db.buildings.get(parseInt(id));
