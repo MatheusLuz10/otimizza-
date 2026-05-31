@@ -39,18 +39,18 @@ function BottomNav() {
   return (
     <nav className="bottom-nav">
       <button
+        className={`nav-item nav-item-home ${location.pathname === '/' ? 'active' : ''}`}
+        onClick={() => navigate('/')}
+      >
+        <span className="nav-icon">🏠</span>
+        <span>Início</span>
+      </button>
+      <button
         className={`nav-item ${isBuildingsActive ? 'active' : ''}`}
         onClick={() => navigate('/buildings')}
       >
         <span className="nav-icon">🏢</span>
         <span>Prédios</span>
-      </button>
-      <button
-        className={`nav-item ${isCTOsActive ? 'active' : ''}`}
-        onClick={() => navigate('/ctos')}
-      >
-        <span className="nav-icon">📦</span>
-        <span>CTOs</span>
       </button>
       <button
         className="nav-item nav-item-new"
@@ -60,18 +60,18 @@ function BottomNav() {
         <span>Novo</span>
       </button>
       <button
+        className={`nav-item ${isCTOsActive ? 'active' : ''}`}
+        onClick={() => navigate('/ctos')}
+      >
+        <span className="nav-icon">📦</span>
+        <span>CTOs</span>
+      </button>
+      <button
         className="nav-item"
         onClick={handleSearch}
       >
         <span className="nav-icon">🔍</span>
         <span>Buscar</span>
-      </button>
-      <button
-        className={`nav-item ${location.pathname === '/' ? 'active' : ''}`}
-        onClick={() => navigate('/')}
-      >
-        <span className="nav-icon">⚙️</span>
-        <span>Config</span>
       </button>
     </nav>
   );
