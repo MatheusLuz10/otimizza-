@@ -181,39 +181,50 @@ function BuildingsPage({ technician }) {
           <>
             <div className="buildings-list">
               {filteredBuildings.map(building => (
-                <div key={building.id} className="card">
-                  <div className="card-header">
-                    <div onClick={() => handleViewCTOs(building.id)} style={{ cursor: 'pointer', flex: 1 }}>
-                      <h3 className="card-title">{building.name}</h3>
-                      {building.address && (
-                        <p className="card-subtitle">📍 {building.address}</p>
-                      )}
-                    </div>
-                    <span className="badge badge-success">✓ Supabase</span>
-                  </div>
+                <div
+                  key={building.id}
+                  className="card"
+                  onClick={() => handleViewCTOs(building.id)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <h3 className="building-name">{building.name}</h3>
 
-                  {building.observations && (
-                    <p className="card-observations">{building.observations}</p>
+                  {building.address && (
+                    <p className="building-address">📍 {building.address}</p>
                   )}
 
-                  <div className="card-actions">
+                  {building.observations && (
+                    <p className="building-obs">{building.observations}</p>
+                  )}
+
+                  {building.createdBy && (
+                    <p className="building-meta">
+                      👤 {building.createdBy}
+                      {building.createdAt && (
+                        <> · {new Date(building.createdAt).toLocaleDateString('pt-BR')}</>
+                      )}
+                    </p>
+                  )}
+
+                  <div className="building-actions" onClick={(e) => e.stopPropagation()}>
                     <button
-                      className="btn btn-primary btn-small"
+                      className="btn btn-primary btn-small btn-view"
                       onClick={() => handleViewCTOs(building.id)}
                     >
                       📦 Ver Caixas
                     </button>
                     <button
-                      className="btn btn-secondary btn-small"
+                      className="btn btn-secondary btn-xs"
                       onClick={() => handleEdit(building)}
                     >
                       ✏️ Editar
                     </button>
                     <button
-                      className="btn btn-danger btn-small"
+                      className="btn-delete"
                       onClick={() => handleDelete(building.id)}
+                      title="Deletar prédio"
                     >
-                      🗑️ Deletar
+                      🗑️
                     </button>
                   </div>
                 </div>
