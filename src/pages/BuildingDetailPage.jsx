@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db, describeFieldChanges, safeLogAudit, saveSyncQueue } from '../db/dexie';
+import { syncAfterLocalChange } from '../services/sync';
 import './BuildingDetailPage.css';
 
 function BuildingDetailPage({ technician }) {
@@ -121,7 +122,7 @@ function BuildingDetailPage({ technician }) {
       setEditingCTOId(null);
       setShowCTOForm(false);
       await loadData();
-      window.dispatchEvent(new CustomEvent('db:updated'));
+      await syncAfterLocalChange();
     } catch (error) {
       const message = error?.name === 'ConstraintError'
         ? 'Ja existe uma caixa com esse codigo.'
@@ -164,7 +165,7 @@ function BuildingDetailPage({ technician }) {
         `Caixa ${ctoCode} deletada`
       );
       await loadData();
-      window.dispatchEvent(new CustomEvent('db:updated'));
+      await syncAfterLocalChange();
     } catch (error) {
       alert('Erro ao deletar caixa');
       console.error('Error deleting CTO:', error);

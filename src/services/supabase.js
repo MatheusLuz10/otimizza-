@@ -149,6 +149,19 @@ export const createBuilding = async (building) => {
   return data;
 };
 
+export const findBuildingByName = async (name) => {
+  if (!name) return null;
+
+  const { data, error } = await requireClient()
+    .from('buildings')
+    .select('*')
+    .eq('name', name)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+};
+
 export const updateBuilding = async (remoteId, updates) => {
   const { data, error } = await requireClient()
     .from('buildings')
@@ -188,6 +201,19 @@ export const createCTO = async (cto, remoteBuildingId) => {
     .insert([toSupabaseCTO(stripLocalFields(cto), remoteBuildingId)])
     .select()
     .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const findCTOByCode = async (code) => {
+  if (!code) return null;
+
+  const { data, error } = await requireClient()
+    .from('ctos')
+    .select('*')
+    .eq('code', code)
+    .maybeSingle();
 
   if (error) throw error;
   return data;

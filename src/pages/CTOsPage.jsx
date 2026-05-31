@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { db, describeFieldChanges, safeLogAudit, saveSyncQueue } from '../db/dexie';
+import { syncAfterLocalChange } from '../services/sync';
 import './CTOsPage.css';
 
 function CTOsPage({ technician }) {
@@ -139,7 +140,7 @@ function CTOsPage({ technician }) {
       setEditingId(null);
       setShowForm(false);
       await loadData();
-      window.dispatchEvent(new CustomEvent('db:updated'));
+      await syncAfterLocalChange();
     } catch (error) {
       const message = error?.name === 'ConstraintError'
         ? 'Ja existe uma CTO com esse codigo.'
@@ -181,7 +182,7 @@ function CTOsPage({ technician }) {
         `Caixa ${cto?.code || id} deletada`
       );
       await loadData();
-      window.dispatchEvent(new CustomEvent('db:updated'));
+      await syncAfterLocalChange();
     } catch (error) {
       alert('Erro ao deletar caixa CTO');
       console.error('Error deleting CTO:', error);

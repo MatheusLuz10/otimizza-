@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, describeFieldChanges, safeLogAudit, saveSyncQueue } from '../db/dexie';
+import { syncAfterLocalChange } from '../services/sync';
 import './BuildingsPage.css';
 
 function BuildingsPage({ technician }) {
@@ -117,7 +118,7 @@ function BuildingsPage({ technician }) {
       setEditingId(null);
       setShowForm(false);
       await loadBuildings();
-      window.dispatchEvent(new CustomEvent('db:updated'));
+      await syncAfterLocalChange();
     } catch (error) {
       const message = error?.name === 'ConstraintError'
         ? 'Ja existe um predio com esse nome.'
@@ -157,7 +158,7 @@ function BuildingsPage({ technician }) {
         `Prédio "${building?.name || id}" deletado`
       );
       await loadBuildings();
-      window.dispatchEvent(new CustomEvent('db:updated'));
+      await syncAfterLocalChange();
     } catch (error) {
       alert('Erro ao deletar prédio');
       console.error('Error deleting building:', error);

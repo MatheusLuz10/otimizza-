@@ -164,6 +164,16 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
+.sync-error-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.sync-error-list li {
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
 @media (max-width: 480px) {
   .dashboard-grid {
     grid-template-columns: 1fr;

@@ -120,6 +120,13 @@ function DashboardPage({ technician, onLogout }) {
         {syncStatus && (
           <div className={`sync-status ${syncStatus.success ? 'success' : 'error'}`}>
             {syncStatus.success ? '✓' : '✕'} {syncStatus.message}
+            {syncStatus.errors?.length > 0 && (
+              <ul className="sync-error-list">
+                {syncStatus.errors.map((error, index) => (
+                  <li key={`${error}-${index}`}>{error}</li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
 
