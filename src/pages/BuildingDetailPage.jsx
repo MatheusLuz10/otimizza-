@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { safeLogAudit, describeFieldChanges } from '../db/dexie';
 import {
@@ -31,6 +31,7 @@ function BuildingDetailPage({ technician }) {
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveResult, setSaveResult] = useState(null); // { ok, failed }
+  const firstCodeRef = useRef(null);
 
   useEffect(() => { loadData(); }, [id]);
 
@@ -71,12 +72,16 @@ function BuildingDetailPage({ technician }) {
     setSharedFields(EMPTY_SHARED);
     setSaveResult(null);
     setShowCTOForm(true);
+    setTimeout(() => firstCodeRef.current?.focus(), 80);
   };
+
+  // Strip "GP" prefix when loading for edit so user only sees the number
+  const stripGP = (code) => code?.toUpperCase().startsWith('GP') ? code.slice(2) : (code || '');
 
   const openEditForm = (cto) => {
     setEditingCTOId(cto.id);
     setEditData({
-      code: cto.code,
+      code: stripGP(cto.code),
       floor: cto.floor || '',
       power: cto.power || '',
       splitter: cto.splitter || '',
@@ -106,7 +111,11 @@ function BuildingDetailPage({ technician }) {
   };
 
   const updateRow = (idx, field, value) => {
-    setFormRows(prev => prev.map((row, i) => i === idx ? { ...row, [field]: value } : row));
+    // Strip any accidental "GP" prefix the user might type in the code field
+    const clean = field === 'code'
+      ? value.toUpperCase().replace(/^GP/i, '')
+      : value.toUpperCase();
+    setFormRows(prev => prev.map((row, i) => i === idx ? { ...row, [field]: clean } : row));
   };
 
   /* ── Salvar (criar múltiplos) ───────────────────────────────────── */
@@ -123,15 +132,19 @@ function BuildingDetailPage({ technician }) {
 
     const results = await Promise.allSettled(
       validRows.map(async (row) => {
+        const fullCode = 'GP' + row.code.trim();
         const cto = await createCTO({
-          code: row.code.trim(),
-          floor: row.floor.trim() || null,
-          ...sharedFields,
+          code: fullCode,
+          floor: row.floor.trim().toUpperCase() || null,
+          power: sharedFields.power.toUpperCase() || null,
+          splitter: sharedFields.splitter.toUpperCase() || null,
+          technicalInfo: sharedFields.technicalInfo.toUpperCase() || null,
+          observations: sharedFields.observations.toUpperCase() || null,
           createdBy: technician.name
         }, buildingId);
         await safeLogAudit(
           'create_cto', technician.name, technician.registration, buildingId, cto.id,
-          `Caixa ${row.code.trim()} criada${row.floor ? ` — ${row.floor}` : ''}`
+          `Caixa ${fullCode} criada${row.floor ? ` — ${row.floor}` : ''}`
         );
         return cto;
       })
@@ -167,6 +180,12 @@ function BuildingDetailPage({ technician }) {
       const previousCTO = ctos.find(c => c.id === editingCTOId);
       await updateCTO(editingCTOId, {
         ...editData,
+        code: 'GP' + editData.code.trim(),
+        floor: editData.floor.toUpperCase() || null,
+        power: editData.power.toUpperCase() || null,
+        splitter: editData.splitter.toUpperCase() || null,
+        technicalInfo: editData.technicalInfo.toUpperCase() || null,
+        observations: editData.observations.toUpperCase() || null,
         createdBy: previousCTO?.createdBy,
         createdAt: previousCTO?.createdAt
       }, buildingId);
@@ -342,15 +361,18 @@ function BuildingDetailPage({ technician }) {
               <div className="batch-rows">
                 {formRows.map((row, idx) => (
                   <div key={idx} className="batch-row">
-                    <input
-                      type="text"
-                      className="form-input batch-code"
-                      placeholder="Código *"
-                      value={row.code}
-                      onChange={(e) => updateRow(idx, 'code', e.target.value)}
-                      disabled={isSaving}
-                      autoFocus={idx === 0}
-                    />
+                    <div className="prefix-input-wrapper batch-code">
+                      <span className="input-prefix">GP</span>
+                      <input
+                        ref={idx === 0 ? firstCodeRef : null}
+                        type="text"
+                        className="input-after-prefix"
+                        placeholder="001"
+                        value={row.code}
+                        onChange={(e) => updateRow(idx, 'code', e.target.value)}
+                        disabled={isSaving}
+                      />
+                    </div>
                     <input
                       type="text"
                       className="form-input batch-floor"
@@ -392,9 +414,9 @@ function BuildingDetailPage({ technician }) {
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="Ex: -18 dBm"
+                    placeholder="EX: -18 DBM"
                     value={sharedFields.power}
-                    onChange={(e) => setSharedFields(p => ({ ...p, power: e.target.value }))}
+                    onChange={(e) => setSharedFields(p => ({ ...p, power: e.target.value.toUpperCase() }))}
                     disabled={isSaving}
                   />
                 </div>
@@ -403,9 +425,9 @@ function BuildingDetailPage({ technician }) {
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="Ex: 1:8"
+                    placeholder="EX: 1:8"
                     value={sharedFields.splitter}
-                    onChange={(e) => setSharedFields(p => ({ ...p, splitter: e.target.value }))}
+                    onChange={(e) => setSharedFields(p => ({ ...p, splitter: e.target.value.toUpperCase() }))}
                     disabled={isSaving}
                   />
                 </div>
@@ -415,9 +437,9 @@ function BuildingDetailPage({ technician }) {
                 <label className="form-label">Informações Técnicas</label>
                 <textarea
                   className="form-input form-textarea"
-                  placeholder="Fibra principal ativa, reserva disponível..."
+                  placeholder="FIBRA PRINCIPAL ATIVA, RESERVA DISPONÍVEL..."
                   value={sharedFields.technicalInfo}
-                  onChange={(e) => setSharedFields(p => ({ ...p, technicalInfo: e.target.value }))}
+                  onChange={(e) => setSharedFields(p => ({ ...p, technicalInfo: e.target.value.toUpperCase() }))}
                   disabled={isSaving}
                   rows="2"
                 />
@@ -427,9 +449,9 @@ function BuildingDetailPage({ technician }) {
                 <label className="form-label">Observações</label>
                 <textarea
                   className="form-input form-textarea"
-                  placeholder="Anotações adicionais..."
+                  placeholder="ANOTAÇÕES ADICIONAIS..."
                   value={sharedFields.observations}
-                  onChange={(e) => setSharedFields(p => ({ ...p, observations: e.target.value }))}
+                  onChange={(e) => setSharedFields(p => ({ ...p, observations: e.target.value.toUpperCase() }))}
                   disabled={isSaving}
                   rows="2"
                 />
@@ -469,15 +491,18 @@ function BuildingDetailPage({ technician }) {
             <form onSubmit={handleEditCTO}>
               <div className="form-group">
                 <label className="form-label">Código *</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Ex: CTO-03"
-                  value={editData.code}
-                  onChange={(e) => setEditData(p => ({ ...p, code: e.target.value }))}
-                  disabled={isSaving}
-                  autoFocus
-                />
+                <div className="prefix-input-wrapper">
+                  <span className="input-prefix">GP</span>
+                  <input
+                    type="text"
+                    className="input-after-prefix"
+                    placeholder="001"
+                    value={editData.code}
+                    onChange={(e) => setEditData(p => ({ ...p, code: e.target.value.toUpperCase().replace(/^GP/i, '') }))}
+                    disabled={isSaving}
+                    autoFocus
+                  />
+                </div>
               </div>
 
               <div className="form-grid">
@@ -486,9 +511,9 @@ function BuildingDetailPage({ technician }) {
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="Ex: 7º andar"
+                    placeholder="EX: 7º ANDAR"
                     value={editData.floor}
-                    onChange={(e) => setEditData(p => ({ ...p, floor: e.target.value }))}
+                    onChange={(e) => setEditData(p => ({ ...p, floor: e.target.value.toUpperCase() }))}
                     disabled={isSaving}
                   />
                 </div>
@@ -497,9 +522,9 @@ function BuildingDetailPage({ technician }) {
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="Ex: -18 dBm"
+                    placeholder="EX: -18 DBM"
                     value={editData.power}
-                    onChange={(e) => setEditData(p => ({ ...p, power: e.target.value }))}
+                    onChange={(e) => setEditData(p => ({ ...p, power: e.target.value.toUpperCase() }))}
                     disabled={isSaving}
                   />
                 </div>
@@ -510,9 +535,9 @@ function BuildingDetailPage({ technician }) {
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="Ex: 1:8, 1:16"
+                  placeholder="EX: 1:8, 1:16"
                   value={editData.splitter}
-                  onChange={(e) => setEditData(p => ({ ...p, splitter: e.target.value }))}
+                  onChange={(e) => setEditData(p => ({ ...p, splitter: e.target.value.toUpperCase() }))}
                   disabled={isSaving}
                 />
               </div>
@@ -521,9 +546,9 @@ function BuildingDetailPage({ technician }) {
                 <label className="form-label">Informações Técnicas</label>
                 <textarea
                   className="form-input form-textarea"
-                  placeholder="Fibra principal ativa..."
+                  placeholder="FIBRA PRINCIPAL ATIVA..."
                   value={editData.technicalInfo}
-                  onChange={(e) => setEditData(p => ({ ...p, technicalInfo: e.target.value }))}
+                  onChange={(e) => setEditData(p => ({ ...p, technicalInfo: e.target.value.toUpperCase() }))}
                   disabled={isSaving}
                   rows="3"
                 />
@@ -533,9 +558,9 @@ function BuildingDetailPage({ technician }) {
                 <label className="form-label">Observações</label>
                 <textarea
                   className="form-input form-textarea"
-                  placeholder="Anotações adicionais..."
+                  placeholder="ANOTAÇÕES ADICIONAIS..."
                   value={editData.observations}
-                  onChange={(e) => setEditData(p => ({ ...p, observations: e.target.value }))}
+                  onChange={(e) => setEditData(p => ({ ...p, observations: e.target.value.toUpperCase() }))}
                   disabled={isSaving}
                   rows="2"
                 />

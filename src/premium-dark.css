@@ -48,6 +48,71 @@ html, body, #root {
   background: var(--premium-bg);
 }
 
+/* Todos os campos de texto em maiúsculo */
+input:not([type="number"]):not([type="password"]),
+textarea {
+  text-transform: uppercase;
+}
+
+input::placeholder,
+textarea::placeholder {
+  text-transform: none;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   INPUT COM PREFIXO FIXO (ex: GP)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.prefix-input-wrapper {
+  display: flex;
+  align-items: stretch;
+  background: rgba(37, 45, 56, 0.5);
+  border: 1px solid var(--premium-border);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.prefix-input-wrapper:focus-within {
+  border-color: var(--premium-primary);
+  background: rgba(37, 45, 56, 0.85);
+}
+
+.input-prefix {
+  padding: 0 12px 0 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--premium-primary);
+  background: rgba(74, 132, 217, 0.1);
+  border-right: 1px solid var(--premium-border);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+  user-select: none;
+}
+
+.input-after-prefix {
+  flex: 1;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--premium-text);
+  text-transform: uppercase;
+  min-width: 0;
+}
+
+.input-after-prefix:focus {
+  outline: none;
+}
+
+.input-after-prefix::placeholder {
+  color: var(--premium-text-tertiary);
+  text-transform: none;
+}
+
 /* ─────────────────────────────────────────────────────────────────────────────
    LOADING CONTAINER
    ───────────────────────────────────────────────────────────────────────────── */

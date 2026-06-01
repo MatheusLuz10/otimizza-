@@ -149,11 +149,39 @@
 
 /* ── RESPONSIVO ─────────────────────────────────────────────────── */
 @media (max-width: 480px) {
+  .search-sticky {
+    top: 52px;
+    padding: 8px 12px;
+  }
+
   .building-row {
-    padding: 12px 14px;
+    padding: 12px;
+    gap: 8px;
   }
 
   .building-row-name {
     font-size: 14px;
+  }
+
+  .building-row-address {
+    font-size: 11px;
+  }
+
+  .cto-count-num {
+    font-size: 16px;
+  }
+
+  .cto-count-lbl {
+    font-size: 9px;
+  }
+
+  /* Ações menores no celular */
+  .building-row-actions {
+    gap: 2px;
+  }
+
+  .btn-delete {
+    padding: 6px 6px;
+    font-size: 13px;
   }
 }

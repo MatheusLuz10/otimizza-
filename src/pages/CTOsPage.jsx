@@ -72,7 +72,7 @@ function CTOsPage({ technician }) {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value.toUpperCase() }));
   };
 
   const handleSubmit = async (e) => {
@@ -92,16 +92,16 @@ function CTOsPage({ technician }) {
 
       if (editingId) {
         const cto = ctos.find(c => c.id === editingId);
-        await updateCTO(editingId, { ...fields, createdBy: cto?.createdBy, createdAt: cto?.createdAt }, buildingId);
+        await updateCTO(editingId, { ...fields, code: 'GP' + fields.code.replace(/^GP/i, ''), createdBy: cto?.createdBy, createdAt: cto?.createdAt }, buildingId);
         await safeLogAudit(
           'update_cto', technician.name, technician.registration, buildingId, editingId,
           describeFieldChanges(cto, fields, { code: 'Código', splitter: 'Splitter', observations: 'Observações' })
         );
       } else {
-        const result = await createCTO({ ...fields, createdBy: technician.name }, buildingId);
+        const result = await createCTO({ ...fields, code: 'GP' + fields.code.replace(/^GP/i, ''), createdBy: technician.name }, buildingId);
         await safeLogAudit(
           'create_cto', technician.name, technician.registration, buildingId, result.id,
-          `Caixa ${formData.code} criada`
+          `Caixa GP${fields.code.replace(/^GP/i, '')} criada`
         );
       }
 
@@ -120,8 +120,9 @@ function CTOsPage({ technician }) {
   };
 
   const handleEdit = (cto) => {
+    const codeNum = cto.code?.toUpperCase().startsWith('GP') ? cto.code.slice(2) : (cto.code || '');
     setFormData({
-      code: cto.code,
+      code: codeNum,
       buildingId: cto.buildingId.toString(),
       ports: cto.ports?.toString() || '',
       splitter: cto.splitter || '',
@@ -259,9 +260,18 @@ function CTOsPage({ technician }) {
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label className="form-label">Código *</label>
-                <input type="text" name="code" className="form-input"
-                  placeholder="Ex: CTO-001" value={formData.code}
-                  onChange={handleInputChange} disabled={isLoading} autoFocus />
+                <div className="prefix-input-wrapper">
+                  <span className="input-prefix">GP</span>
+                  <input
+                    type="text"
+                    className="input-after-prefix"
+                    placeholder="001"
+                    value={formData.code}
+                    onChange={(e) => setFormData(p => ({ ...p, code: e.target.value.toUpperCase().replace(/^GP/i, '') }))}
+                    disabled={isLoading}
+                    autoFocus
+                  />
+                </div>
               </div>
               <div className="form-group">
                 <label className="form-label">Prédio *</label>
