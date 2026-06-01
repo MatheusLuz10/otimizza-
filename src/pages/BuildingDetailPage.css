@@ -153,166 +153,108 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   CTO CARDS GRID
+   CTO LISTA VERTICAL
    ───────────────────────────────────────────────────────────────────────────── */
 
-.ctos-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+.ctos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
   margin-bottom: 16px;
 }
 
-.cto-card {
-  background: rgba(31, 36, 48, 0.4);
-  border: 1px solid var(--premium-border);
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: var(--shadow-sm);
-  backdrop-filter: blur(8px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.cto-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(74, 132, 217, 0.05) 0%, transparent 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-}
-
-.cto-card:hover {
-  background: rgba(31, 36, 48, 0.6);
-  border-color: var(--premium-border-light);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
-}
-
-.cto-card:hover::before {
-  opacity: 1;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   CTO CARD HEADER
-   ───────────────────────────────────────────────────────────────────────────── */
-
-.cto-header {
+/* Linha de CTO — layout horizontal adaptável */
+.cto-row {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--premium-border);
 }
 
-.cto-code {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--premium-primary);
-  letter-spacing: -0.3px;
+.cto-row:first-child {
+  border-top: 1px solid var(--premium-border);
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   CTO INFO ROWS
-   ───────────────────────────────────────────────────────────────────────────── */
-
-.cto-info {
+/* Conteúdo principal — ocupa todo o espaço livre */
+.cto-row-body {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 12px;
+  gap: 5px;
 }
 
-.info-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  font-size: 13px;
-}
-
-.info-label {
-  color: var(--premium-text-secondary);
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.info-value {
-  color: var(--premium-text);
-  background: rgba(74, 132, 217, 0.1);
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-weight: 600;
-  border: 1px solid rgba(74, 132, 217, 0.2);
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   TECHNICAL INFO BLOCK
-   ───────────────────────────────────────────────────────────────────────────── */
-
-.technical-info {
-  background: rgba(74, 132, 217, 0.06);
-  border-radius: 6px;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-left: 2px solid var(--premium-primary);
-}
-
-.tech-label {
-  font-size: 11px;
+/* Código da caixa — destaque */
+.cto-row-code {
+  font-size: 15px;
   font-weight: 700;
   color: var(--premium-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 4px;
+  letter-spacing: 0.2px;
 }
 
-.tech-content {
-  font-size: 12px;
-  color: var(--premium-text-secondary);
-  line-height: 1.5;
-  font-family: 'Monaco', 'Courier New', monospace;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   OBSERVATIONS BLOCK (CTO-level, different from building-observations)
-   ───────────────────────────────────────────────────────────────────────────── */
-
-.observations {
-  background: rgba(212, 165, 71, 0.06);
-  border-radius: 6px;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-left: 2px solid var(--premium-warning);
-}
-
-.obs-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--premium-warning);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 4px;
-}
-
-.obs-content {
-  font-size: 12px;
-  color: var(--premium-text-secondary);
-  line-height: 1.5;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   CTO ACTIONS
-   ───────────────────────────────────────────────────────────────────────────── */
-
-.cto-actions {
+/* Tags de detalhes: andar, splitter, potência */
+.cto-row-tags {
   display: flex;
-  gap: 8px;
   flex-wrap: wrap;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--premium-border);
+  gap: 5px;
+}
+
+.cto-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--premium-text-secondary);
+  border: 1px solid var(--premium-border);
+  white-space: nowrap;
+}
+
+.cto-tag-floor {
+  color: var(--premium-text);
+  background: rgba(74, 132, 217, 0.08);
+  border-color: rgba(74, 132, 217, 0.2);
+}
+
+/* Informação técnica / observação — linha extra */
+.cto-row-extra {
+  font-size: 11px;
+  color: var(--premium-text-tertiary);
+  margin: 0;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Botões de ação — direita, compactos */
+.cto-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+
+/* Botão deletar — fantasma, fica vermelho só no hover */
+.btn-delete {
+  background: transparent;
+  color: var(--premium-text-tertiary);
+  border: none;
+  padding: 6px 7px;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+}
+
+.btn-delete:hover {
+  color: var(--premium-danger);
+  background: rgba(217, 107, 107, 0.1);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -431,10 +373,6 @@
    ───────────────────────────────────────────────────────────────────────────── */
 
 @media (max-width: 600px) {
-  .ctos-grid {
-    grid-template-columns: 1fr;
-  }
-
   .form-grid {
     grid-template-columns: 1fr;
   }
@@ -445,15 +383,25 @@
   }
 
   .building-info-card {
-    padding: 16px;
+    padding: 14px;
   }
 
   .building-name {
-    font-size: 18px;
+    font-size: 17px;
   }
 
-  .cto-card {
-    padding: 12px;
+  .cto-row {
+    padding: 11px 0;
+    gap: 8px;
+  }
+
+  .cto-row-code {
+    font-size: 14px;
+  }
+
+  .cto-tag {
+    font-size: 10px;
+    padding: 2px 6px;
   }
 }
 

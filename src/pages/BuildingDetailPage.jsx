@@ -292,51 +292,28 @@ function BuildingDetailPage({ technician }) {
               <div className="empty-state-text">Adicione a primeira caixa para este prédio</div>
             </div>
           ) : (
-            <div className="ctos-grid">
+            <div className="ctos-list">
               {ctos.map(cto => (
-                <div key={cto.id} className="cto-card">
-                  <div className="cto-header">
-                    <div className="cto-code">{cto.code}</div>
-                    <span className="badge badge-success">✓</span>
-                  </div>
-                  <div className="cto-info">
-                    {cto.floor && (
-                      <div className="info-row">
-                        <span className="info-label">Andar:</span>
-                        <span className="info-value">{cto.floor}</span>
-                      </div>
-                    )}
-                    {cto.power && (
-                      <div className="info-row">
-                        <span className="info-label">Potência:</span>
-                        <span className="info-value">{cto.power}</span>
-                      </div>
-                    )}
-                    {cto.splitter && (
-                      <div className="info-row">
-                        <span className="info-label">Splitter:</span>
-                        <span className="info-value">{cto.splitter}</span>
-                      </div>
+                <div key={cto.id} className="cto-row">
+                  <div className="cto-row-body">
+                    <span className="cto-row-code">{cto.code}</span>
+                    <div className="cto-row-tags">
+                      {cto.floor    && <span className="cto-tag cto-tag-floor">📍 {cto.floor}</span>}
+                      {cto.splitter && <span className="cto-tag">{cto.splitter}</span>}
+                      {cto.power    && <span className="cto-tag">{cto.power}</span>}
+                    </div>
+                    {(cto.technicalInfo || cto.observations) && (
+                      <p className="cto-row-extra">
+                        {cto.technicalInfo || cto.observations}
+                      </p>
                     )}
                   </div>
-                  {cto.technicalInfo && (
-                    <div className="technical-info">
-                      <div className="tech-label">Info Técnica</div>
-                      <div className="tech-content">{cto.technicalInfo}</div>
-                    </div>
-                  )}
-                  {cto.observations && (
-                    <div className="observations">
-                      <div className="obs-label">Observações</div>
-                      <div className="obs-content">{cto.observations}</div>
-                    </div>
-                  )}
-                  <div className="cto-actions">
+                  <div className="cto-row-actions">
                     <button className="btn btn-secondary btn-xs" onClick={() => openEditForm(cto)}>
-                      ✏️ Editar
+                      ✏️
                     </button>
-                    <button className="btn btn-danger btn-xs" onClick={() => handleDeleteCTO(cto.id, cto.code)}>
-                      🗑️ Deletar
+                    <button className="btn-delete" onClick={() => handleDeleteCTO(cto.id, cto.code)} title="Deletar">
+                      🗑️
                     </button>
                   </div>
                 </div>
