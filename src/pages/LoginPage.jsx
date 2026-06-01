@@ -38,7 +38,7 @@ function LoginPage({ onLogin }) {
       <div className="login-container">
         <div className="login-header">
           <div className="logo-icon">📡</div>
-          <h1 className="app-title">CTO Manager</h1>
+          <h1 className="app-title">Otimizza Pred</h1>
           <p className="app-subtitle">Gerenciamento de Prédios e Caixas</p>
         </div>
 
