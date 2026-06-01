@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { safeLogAudit, describeFieldChanges } from '../db/dexie';
 import {
-  fetchBuildings, createBuilding, updateBuilding, deleteBuilding, fromSupabaseBuilding
+  fetchBuildings, fetchCTOs, createBuilding, updateBuilding, deleteBuilding, fromSupabaseBuilding
 } from '../services/supabase';
 import './BuildingsPage.css';
 
 function BuildingsPage({ technician }) {
   const [buildings, setBuildings] = useState([]);
   const [filteredBuildings, setFilteredBuildings] = useState([]);
+  const [ctoCountMap, setCtoCountMap] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ name: '', address: '', observations: '' });
@@ -50,8 +51,13 @@ function BuildingsPage({ technician }) {
 
   const loadBuildings = async () => {
     try {
-      const data = await fetchBuildings();
-      setBuildings(data.map(fromSupabaseBuilding));
+      const [buildingsData, ctosData] = await Promise.all([fetchBuildings(), fetchCTOs()]);
+      setBuildings(buildingsData.map(fromSupabaseBuilding));
+      const countMap = {};
+      ctosData.forEach(c => {
+        countMap[c.building_id] = (countMap[c.building_id] || 0) + 1;
+      });
+      setCtoCountMap(countMap);
     } catch (error) {
       console.error('Erro ao carregar prédios:', error);
     }
@@ -154,16 +160,17 @@ function BuildingsPage({ technician }) {
         <h1 className="page-title">Prédios</h1>
       </div>
 
-      <div className="page-content">
-        <div className="search-box">
-          <input
-            type="text"
-            placeholder="Buscar por nome ou endereço..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+      <div className="search-sticky">
+        <input
+          type="text"
+          className="search-input"
+          placeholder="Buscar por nome ou endereço..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
 
+      <div className="page-content">
         {filteredBuildings.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon">🏢</div>
@@ -183,41 +190,27 @@ function BuildingsPage({ technician }) {
               {filteredBuildings.map(building => (
                 <div
                   key={building.id}
-                  className="card"
+                  className="building-row"
                   onClick={() => handleViewCTOs(building.id)}
-                  style={{ cursor: 'pointer' }}
                 >
-                  <h3 className="building-name">{building.name}</h3>
+                  <div className="building-row-info">
+                    <span className="building-row-name">{building.name}</span>
+                    {building.address && (
+                      <span className="building-row-address">📍 {building.address}</span>
+                    )}
+                  </div>
 
-                  {building.address && (
-                    <p className="building-address">📍 {building.address}</p>
-                  )}
+                  <div className="building-row-count">
+                    <span className="cto-count-num">{ctoCountMap[building.id] || 0}</span>
+                    <span className="cto-count-lbl">CTO{(ctoCountMap[building.id] || 0) !== 1 ? 's' : ''}</span>
+                  </div>
 
-                  {building.observations && (
-                    <p className="building-obs">{building.observations}</p>
-                  )}
-
-                  {building.createdBy && (
-                    <p className="building-meta">
-                      👤 {building.createdBy}
-                      {building.createdAt && (
-                        <> · {new Date(building.createdAt).toLocaleDateString('pt-BR')}</>
-                      )}
-                    </p>
-                  )}
-
-                  <div className="building-actions" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      className="btn btn-primary btn-small btn-view"
-                      onClick={() => handleViewCTOs(building.id)}
-                    >
-                      📦 Ver Caixas
-                    </button>
+                  <div className="building-row-actions" onClick={(e) => e.stopPropagation()}>
                     <button
                       className="btn btn-secondary btn-xs"
                       onClick={() => handleEdit(building)}
                     >
-                      ✏️ Editar
+                      ✏️
                     </button>
                     <button
                       className="btn-delete"
