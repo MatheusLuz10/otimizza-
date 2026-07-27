@@ -1,124 +1,187 @@
+/* ── BUSCA FIXA ─────────────────────────────────────────────────── */
+.search-sticky {
+  position: sticky;
+  top: 56px;          /* abaixo do page-header sticky */
+  z-index: 30;
+  background: var(--premium-bg);
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--premium-border);
+}
+
+.search-input {
+  width: 100%;
+  padding: 11px 14px;
+  background: rgba(37, 45, 56, 0.6);
+  border: 1px solid var(--premium-border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--premium-text);
+  transition: border-color 0.2s ease;
+}
+
+.search-input::placeholder {
+  color: var(--premium-text-tertiary);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--premium-primary);
+  background: rgba(37, 45, 56, 0.85);
+}
+
+/* ── LISTA DE PRÉDIOS ───────────────────────────────────────────── */
 .buildings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
   margin-bottom: 16px;
 }
 
-.card-observations {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin: 8px 0;
-  padding: 8px;
-  background: #f5f5f5;
-  border-radius: 4px;
-  border-left: 2px solid var(--text-secondary);
-}
-
-.card-actions {
+/* ── LINHA DE PRÉDIO ────────────────────────────────────────────── */
+.building-row {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border-color);
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--premium-border);
+  background: transparent;
+  transition: background 0.15s ease;
 }
 
-.btn-small {
-  font-size: 12px;
-  padding: 8px 12px;
+.building-row:first-child {
+  border-top: 1px solid var(--premium-border);
+}
+
+.building-row:hover,
+.building-row:active {
+  background: rgba(74, 132, 217, 0.06);
+}
+
+/* Info principal — ocupa todo espaço livre */
+.building-row-info {
   flex: 1;
-  min-width: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
+.building-row-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--premium-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.building-row-address {
+  font-size: 12px;
+  color: var(--premium-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Contador de CTOs */
+.building-row-count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  min-width: 36px;
+}
+
+.cto-count-num {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--premium-primary);
+  line-height: 1;
+}
+
+.cto-count-lbl {
+  font-size: 10px;
+  color: var(--premium-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* Ações — editar + deletar */
+.building-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Botão deletar — fantasma, fica vermelho só no hover */
+.btn-delete {
+  background: transparent;
+  color: var(--premium-text-tertiary);
+  border: none;
+  padding: 7px 8px;
+  font-size: 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+}
+
+.btn-delete:hover {
+  color: var(--premium-danger);
+  background: rgba(217, 107, 107, 0.1);
+}
+
+/* ── BOTÃO STICKY ADICIONAR ─────────────────────────────────────── */
 .sticky-add-button {
   position: sticky;
-  bottom: 80px;
-  padding: 16px;
-  background: white;
-  border-top: 1px solid var(--border-color);
-  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+  bottom: calc(68px + env(safe-area-inset-bottom, 0px) + 20px);
+  padding: 12px 16px;
+  background: rgba(28, 33, 43, 0.9);
+  border-top: 1px solid var(--premium-border);
+  backdrop-filter: blur(10px);
   z-index: 50;
 }
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: flex-end;
-  z-index: 1000;
-}
-
-.modal {
-  background: var(--surface);
-  width: 100%;
-  border-radius: 8px 8px 0 0;
-  padding: 24px;
-  max-height: 90vh;
-  overflow-y: auto;
-  animation: slideUp 0.3s ease;
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-.modal-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0;
-}
-
-.modal-close {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: var(--text-primary);
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.form-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 24px;
-}
-
-.form-actions button {
-  flex: 1;
-}
-
+/* ── RESPONSIVO ─────────────────────────────────────────────────── */
 @media (max-width: 480px) {
-  .modal {
-    max-height: 100vh;
-    border-radius: 8px 8px 0 0;
+  .search-sticky {
+    top: 52px;
+    padding: 8px 12px;
   }
 
-  .btn-small {
-    min-width: 70px;
-    padding: 6px 10px;
+  .building-row {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .building-row-name {
+    font-size: 14px;
+  }
+
+  .building-row-address {
     font-size: 11px;
   }
 
-  .card-actions {
-    gap: 6px;
+  .cto-count-num {
+    font-size: 16px;
+  }
+
+  .cto-count-lbl {
+    font-size: 9px;
+  }
+
+  /* Ações menores no celular */
+  .building-row-actions {
+    gap: 2px;
+  }
+
+  .btn-delete {
+    padding: 6px 6px;
+    font-size: 13px;
   }
 }

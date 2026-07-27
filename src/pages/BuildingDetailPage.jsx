@@ -1,34 +1,43 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { db, describeFieldChanges, safeLogAudit, saveSyncQueue } from '../db/dexie';
-import { syncAfterLocalChange } from '../services/sync';
+import { safeLogAudit, describeFieldChanges } from '../db/dexie';
+import {
+  fetchBuildings, fetchCTOsByBuilding, createCTO, updateCTO, deleteCTO,
+  fromSupabaseBuilding, fromSupabaseCTO
+} from '../services/supabase';
 import './BuildingDetailPage.css';
+
+const EMPTY_ROW = () => ({ code: '', floor: '' });
+const EMPTY_SHARED = { power: '', splitter: '', technicalInfo: '', observations: '' };
+const EMPTY_EDIT = { code: '', floor: '', power: '', splitter: '', technicalInfo: '', observations: '' };
 
 function BuildingDetailPage({ technician }) {
   const { id } = useParams();
+  const buildingId = parseInt(id);
   const navigate = useNavigate();
+
   const [building, setBuilding] = useState(null);
   const [ctos, setCTOs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCTOForm, setShowCTOForm] = useState(false);
   const [editingCTOId, setEditingCTOId] = useState(null);
-  const [formData, setFormData] = useState({
-    code: '',
-    floor: '',
-    power: '',
-    splitter: '',
-    technicalInfo: '',
-    observations: ''
-  });
-  const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, [id]);
+  // Formulário de edição — único CTO
+  const [editData, setEditData] = useState(EMPTY_EDIT);
+
+  // Formulário de criação — múltiplas linhas
+  const [formRows, setFormRows] = useState([EMPTY_ROW()]);
+  const [sharedFields, setSharedFields] = useState(EMPTY_SHARED);
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveResult, setSaveResult] = useState(null); // { ok, failed }
+  const firstCodeRef = useRef(null);
+
+  useEffect(() => { loadData(); }, [id]);
 
   useEffect(() => {
     const handleDbUpdate = () => loadData();
-    const handleNavNew = () => setShowCTOForm(true);
+    const handleNavNew = () => openCreateForm();
     window.addEventListener('db:updated', handleDbUpdate);
     window.addEventListener('bottomnav:new', handleNavNew);
     return () => {
@@ -38,185 +47,202 @@ function BuildingDetailPage({ technician }) {
   }, []);
 
   const loadData = async () => {
+    setIsLoading(true);
     try {
-      const buildingData = await db.buildings.get(parseInt(id));
-      const ctosData = await db.ctos.where('buildingId').equals(parseInt(id)).toArray();
-      
-      setBuilding(buildingData);
-      setCTOs(ctosData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+      const [allBuildings, ctosData] = await Promise.all([
+        fetchBuildings(),
+        fetchCTOsByBuilding(buildingId)
+      ]);
+      const found = allBuildings.find(b => b.id === buildingId);
+      setBuilding(found ? fromSupabaseBuilding(found) : null);
+      setCTOs(ctosData.map(fromSupabaseCTO).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Erro ao carregar dados:', error);
       navigate('/buildings');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  /* ── Abrir / fechar formulário ──────────────────────────────────── */
+
+  const openCreateForm = () => {
+    setEditingCTOId(null);
+    setFormRows([EMPTY_ROW()]);
+    setSharedFields(EMPTY_SHARED);
+    setSaveResult(null);
+    setShowCTOForm(true);
+    setTimeout(() => firstCodeRef.current?.focus(), 80);
   };
 
-  const handleSaveCTO = async (e) => {
-    e.preventDefault();
-    
-    if (!formData.code.trim()) {
-      alert('Código da caixa é obrigatório');
-      return;
-    }
+  // Strip "GP" prefix when loading for edit so user only sees the number
+  const stripGP = (code) => code?.toUpperCase().startsWith('GP') ? code.slice(2) : (code || '');
 
-    setIsSaving(true);
-    try {
-      const now = new Date();
-      const buildingId = parseInt(id);
-
-      if (editingCTOId) {
-        // Update
-        const previousCTO = await db.ctos.get(editingCTOId);
-        const ctoData = {
-          ...formData,
-          updatedAt: now,
-          syncStatus: 'pending'
-        };
-
-        await db.ctos.update(editingCTOId, ctoData);
-        await saveSyncQueue('cto', 'update', editingCTOId, ctoData);
-        await safeLogAudit(
-          'update_cto',
-          technician.name,
-          technician.registration,
-          buildingId,
-          editingCTOId,
-          describeFieldChanges(previousCTO, ctoData, {
-            code: 'Código',
-            floor: 'Andar',
-            power: 'Potência',
-            splitter: 'Splitter',
-            technicalInfo: 'Informações técnicas',
-            observations: 'Observações'
-          })
-        );
-      } else {
-        // Create
-        const newCTO = {
-          ...formData,
-          buildingId,
-          createdBy: technician.name,
-          createdAt: now,
-          updatedAt: now,
-          syncStatus: 'pending'
-        };
-
-        const ctoId = await db.ctos.add(newCTO);
-        await saveSyncQueue('cto', 'create', ctoId, newCTO);
-        await safeLogAudit(
-          'create_cto',
-          technician.name,
-          technician.registration,
-          buildingId,
-          ctoId,
-          `Caixa ${formData.code} criada`
-        );
-      }
-
-      setFormData({
-        code: '',
-        floor: '',
-        power: '',
-        splitter: '',
-        technicalInfo: '',
-        observations: ''
-      });
-      setEditingCTOId(null);
-      setShowCTOForm(false);
-      await loadData();
-      await syncAfterLocalChange();
-    } catch (error) {
-      const message = error?.name === 'ConstraintError'
-        ? 'Ja existe uma caixa com esse codigo.'
-        : `Erro ao salvar caixa: ${error?.message || 'verifique os dados informados'}`;
-      alert(message);
-      console.error('Error saving CTO:', error);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleEditCTO = (cto) => {
-    setFormData({
-      code: cto.code,
+  const openEditForm = (cto) => {
+    setEditingCTOId(cto.id);
+    setEditData({
+      code: stripGP(cto.code),
       floor: cto.floor || '',
       power: cto.power || '',
       splitter: cto.splitter || '',
       technicalInfo: cto.technicalInfo || '',
       observations: cto.observations || ''
     });
-    setEditingCTOId(cto.id);
+    setSaveResult(null);
     setShowCTOForm(true);
   };
 
-  const handleDeleteCTO = async (ctoId, ctoCode) => {
-    if (!confirm(`Deletar caixa ${ctoCode}?`)) {
+  const closeForm = () => {
+    setShowCTOForm(false);
+    setEditingCTOId(null);
+    setFormRows([EMPTY_ROW()]);
+    setSharedFields(EMPTY_SHARED);
+    setEditData(EMPTY_EDIT);
+    setSaveResult(null);
+  };
+
+  /* ── Gerenciar linhas (criar múltiplas) ─────────────────────────── */
+
+  const addRow = () => setFormRows(prev => [...prev, EMPTY_ROW()]);
+
+  const removeRow = (idx) => {
+    if (formRows.length === 1) return;
+    setFormRows(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const updateRow = (idx, field, value) => {
+    // Strip any accidental "GP" prefix the user might type in the code field
+    const clean = field === 'code'
+      ? value.toUpperCase().replace(/^GP/i, '')
+      : value.toUpperCase();
+    setFormRows(prev => prev.map((row, i) => i === idx ? { ...row, [field]: clean } : row));
+  };
+
+  /* ── Salvar (criar múltiplos) ───────────────────────────────────── */
+
+  const handleCreateCTOs = async (e) => {
+    e.preventDefault();
+    const validRows = formRows.filter(r => r.code.trim());
+    if (validRows.length === 0) {
+      alert('Informe ao menos um código de caixa.');
       return;
     }
+    setIsSaving(true);
+    setSaveResult(null);
 
+    const results = await Promise.allSettled(
+      validRows.map(async (row) => {
+        const fullCode = 'GP' + row.code.trim();
+        const cto = await createCTO({
+          code: fullCode,
+          floor: row.floor.trim().toUpperCase() || null,
+          power: sharedFields.power.toUpperCase() || null,
+          splitter: sharedFields.splitter.toUpperCase() || null,
+          technicalInfo: sharedFields.technicalInfo.toUpperCase() || null,
+          observations: sharedFields.observations.toUpperCase() || null,
+          createdBy: technician.name
+        }, buildingId);
+        await safeLogAudit(
+          'create_cto', technician.name, technician.registration, buildingId, cto.id,
+          `Caixa ${fullCode} criada${row.floor ? ` — ${row.floor}` : ''}`
+        );
+        return cto;
+      })
+    );
+
+    const ok = results.filter(r => r.status === 'fulfilled').length;
+    const failed = results.filter(r => r.status === 'rejected');
+
+    setSaveResult({ ok, failed: failed.length });
+    setIsSaving(false);
+
+    if (ok > 0) {
+      await loadData();
+      if (failed.length === 0) closeForm();
+      else {
+        // Remove linhas que criaram com sucesso, mantém as que falharam
+        const failedIndexes = failed.map((_, i) => {
+          const rejIdx = results.findIndex((r, ri) => r.status === 'rejected' && ri >= i);
+          return rejIdx;
+        });
+        setFormRows(prev => prev.filter((_, i) => failedIndexes.includes(i)));
+      }
+    }
+  };
+
+  /* ── Salvar (editar único) ──────────────────────────────────────── */
+
+  const handleEditCTO = async (e) => {
+    e.preventDefault();
+    if (!editData.code.trim()) { alert('Código da caixa é obrigatório'); return; }
+    setIsSaving(true);
     try {
-      const cto = await db.ctos.get(ctoId);
-      await db.ctos.delete(ctoId);
-      await saveSyncQueue('cto', 'delete', ctoId, { remoteId: cto?.remoteId || null });
+      const previousCTO = ctos.find(c => c.id === editingCTOId);
+      await updateCTO(editingCTOId, {
+        ...editData,
+        code: 'GP' + editData.code.trim(),
+        floor: editData.floor.toUpperCase() || null,
+        power: editData.power.toUpperCase() || null,
+        splitter: editData.splitter.toUpperCase() || null,
+        technicalInfo: editData.technicalInfo.toUpperCase() || null,
+        observations: editData.observations.toUpperCase() || null,
+        createdBy: previousCTO?.createdBy,
+        createdAt: previousCTO?.createdAt
+      }, buildingId);
       await safeLogAudit(
-        'delete_cto',
-        technician.name,
-        technician.registration,
-        parseInt(id),
-        ctoId,
+        'update_cto', technician.name, technician.registration, buildingId, editingCTOId,
+        describeFieldChanges(previousCTO, editData, {
+          code: 'Código', floor: 'Andar', power: 'Potência',
+          splitter: 'Splitter', technicalInfo: 'Info técnica', observations: 'Observações'
+        })
+      );
+      closeForm();
+      await loadData();
+    } catch (error) {
+      const message = error?.code === '23505'
+        ? 'Já existe uma caixa com esse código.'
+        : `Erro ao salvar: ${error?.message || ''}`;
+      alert(message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  /* ── Deletar ────────────────────────────────────────────────────── */
+
+  const handleDeleteCTO = async (ctoId, ctoCode) => {
+    if (!confirm(`Deletar caixa ${ctoCode}?`)) return;
+    try {
+      await deleteCTO(ctoId);
+      await safeLogAudit(
+        'delete_cto', technician.name, technician.registration, buildingId, ctoId,
         `Caixa ${ctoCode} deletada`
       );
       await loadData();
-      await syncAfterLocalChange();
     } catch (error) {
       alert('Erro ao deletar caixa');
-      console.error('Error deleting CTO:', error);
     }
   };
 
-  const handleCancelForm = () => {
-    setFormData({
-      code: '',
-      floor: '',
-      power: '',
-      splitter: '',
-      technicalInfo: '',
-      observations: ''
-    });
-    setEditingCTOId(null);
-    setShowCTOForm(false);
-  };
+  /* ── Render ─────────────────────────────────────────────────────── */
 
-  if (isLoading) {
-    return (
-      <div className="page">
-        <div className="page-header">
-          <button className="btn-back" onClick={() => navigate('/buildings')}>← Voltar</button>
-          <h1 className="page-title">Carregando...</h1>
-        </div>
+  if (isLoading) return (
+    <div className="page">
+      <div className="page-header">
+        <button className="btn-back" onClick={() => navigate('/buildings')}>← Voltar</button>
+        <h1 className="page-title">Carregando...</h1>
       </div>
-    );
-  }
+    </div>
+  );
 
-  if (!building) {
-    return (
-      <div className="page">
-        <div className="page-header">
-          <button className="btn-back" onClick={() => navigate('/buildings')}>← Voltar</button>
-          <h1 className="page-title">Prédio não encontrado</h1>
-        </div>
+  if (!building) return (
+    <div className="page">
+      <div className="page-header">
+        <button className="btn-back" onClick={() => navigate('/buildings')}>← Voltar</button>
+        <h1 className="page-title">Prédio não encontrado</h1>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
     <div className="page">
@@ -228,9 +254,7 @@ function BuildingDetailPage({ technician }) {
       <div className="page-content">
         <div className="building-info-card">
           <h2 className="building-name">{building.name}</h2>
-          {building.address && (
-            <p className="building-address">📍 {building.address}</p>
-          )}
+          {building.address && <p className="building-address">📍 {building.address}</p>}
           {building.observations && (
             <div className="building-observations">
               <h4>Observações</h4>
@@ -240,13 +264,11 @@ function BuildingDetailPage({ technician }) {
           <div className="building-meta">
             <div className="meta-item">
               <span className="meta-label">Técnico</span>
-              <span className="meta-value">{building.createdBy}</span>
+              <span className="meta-value">{building.createdBy || '—'}</span>
             </div>
             <div className="meta-item">
-              <span className="meta-label">Data de criação</span>
-              <span className="meta-value">
-                {new Date(building.createdAt).toLocaleDateString('pt-BR')}
-              </span>
+              <span className="meta-label">Criado em</span>
+              <span className="meta-value">{new Date(building.createdAt).toLocaleDateString('pt-BR')}</span>
             </div>
             <div className="meta-item">
               <span className="meta-label">Caixas</span>
@@ -258,10 +280,7 @@ function BuildingDetailPage({ technician }) {
         <div className="ctos-section">
           <div className="section-header">
             <h3 className="section-title">Caixas CTO</h3>
-            <button 
-              className="btn btn-primary btn-sm"
-              onClick={() => setShowCTOForm(true)}
-            >
+            <button className="btn btn-primary btn-sm" onClick={openCreateForm}>
               ➕ Nova Caixa
             </button>
           </div>
@@ -270,68 +289,31 @@ function BuildingDetailPage({ technician }) {
             <div className="empty-state">
               <div className="empty-state-icon">📦</div>
               <div className="empty-state-title">Nenhuma caixa CTO</div>
-              <div className="empty-state-text">
-                Adicione a primeira caixa para este prédio
-              </div>
+              <div className="empty-state-text">Adicione a primeira caixa para este prédio</div>
             </div>
           ) : (
-            <div className="ctos-grid">
+            <div className="ctos-list">
               {ctos.map(cto => (
-                <div key={cto.id} className="cto-card">
-                  <div className="cto-header">
-                    <div className="cto-code">{cto.code}</div>
-                    <span className={`badge badge-${cto.syncStatus === 'pending' ? 'warning' : 'success'}`}>
-                      {cto.syncStatus === 'pending' ? '⟳' : '✓'}
-                    </span>
-                  </div>
-
-                  <div className="cto-info">
-                    {cto.floor && (
-                      <div className="info-row">
-                        <span className="info-label">Andar:</span>
-                        <span className="info-value">{cto.floor}</span>
-                      </div>
-                    )}
-                    {cto.power && (
-                      <div className="info-row">
-                        <span className="info-label">Potência:</span>
-                        <span className="info-value">{cto.power}</span>
-                      </div>
-                    )}
-                    {cto.splitter && (
-                      <div className="info-row">
-                        <span className="info-label">Splitter:</span>
-                        <span className="info-value">{cto.splitter}</span>
-                      </div>
+                <div key={cto.id} className="cto-row">
+                  <div className="cto-row-body">
+                    <span className="cto-row-code">{cto.code}</span>
+                    <div className="cto-row-tags">
+                      {cto.floor    && <span className="cto-tag cto-tag-floor">📍 {cto.floor}</span>}
+                      {cto.splitter && <span className="cto-tag">{cto.splitter}</span>}
+                      {cto.power    && <span className="cto-tag">{cto.power}</span>}
+                    </div>
+                    {(cto.technicalInfo || cto.observations) && (
+                      <p className="cto-row-extra">
+                        {cto.technicalInfo || cto.observations}
+                      </p>
                     )}
                   </div>
-
-                  {cto.technicalInfo && (
-                    <div className="technical-info">
-                      <div className="tech-label">Informações Técnicas:</div>
-                      <div className="tech-content">{cto.technicalInfo}</div>
-                    </div>
-                  )}
-
-                  {cto.observations && (
-                    <div className="observations">
-                      <div className="obs-label">Observações:</div>
-                      <div className="obs-content">{cto.observations}</div>
-                    </div>
-                  )}
-
-                  <div className="cto-actions">
-                    <button
-                      className="btn btn-secondary btn-xs"
-                      onClick={() => handleEditCTO(cto)}
-                    >
-                      ✏️ Editar
+                  <div className="cto-row-actions">
+                    <button className="btn btn-secondary btn-xs" onClick={() => openEditForm(cto)}>
+                      ✏️
                     </button>
-                    <button
-                      className="btn btn-danger btn-xs"
-                      onClick={() => handleDeleteCTO(cto.id, cto.code)}
-                    >
-                      🗑️ Deletar
+                    <button className="btn-delete" onClick={() => handleDeleteCTO(cto.id, cto.code)} title="Deletar">
+                      🗑️
                     </button>
                   </div>
                 </div>
@@ -341,29 +323,163 @@ function BuildingDetailPage({ technician }) {
         </div>
       </div>
 
-      {showCTOForm && (
-        <div className="modal-overlay" onClick={handleCancelForm}>
+      {/* ── MODAL CRIAR (múltiplas caixas) ── */}
+      {showCTOForm && !editingCTOId && (
+        <div className="modal-overlay" onClick={closeForm}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2 className="modal-title">
-                {editingCTOId ? 'Editar Caixa CTO' : 'Nova Caixa CTO'}
-              </h2>
-              <button className="modal-close" onClick={handleCancelForm}>✕</button>
+              <h2 className="modal-title">Nova(s) Caixa(s) CTO</h2>
+              <button className="modal-close" onClick={closeForm}>✕</button>
             </div>
 
-            <form onSubmit={handleSaveCTO}>
+            <form onSubmit={handleCreateCTOs}>
+              {/* Linhas de código + andar */}
+              <div className="batch-label">Caixas</div>
+              <div className="batch-rows">
+                {formRows.map((row, idx) => (
+                  <div key={idx} className="batch-row">
+                    <div className="prefix-input-wrapper batch-code">
+                      <span className="input-prefix">GP</span>
+                      <input
+                        ref={idx === 0 ? firstCodeRef : null}
+                        type="text"
+                        className="input-after-prefix"
+                        placeholder="001"
+                        value={row.code}
+                        onChange={(e) => updateRow(idx, 'code', e.target.value)}
+                        disabled={isSaving}
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      className="form-input batch-floor"
+                      placeholder="Andar"
+                      value={row.floor}
+                      onChange={(e) => updateRow(idx, 'floor', e.target.value)}
+                      disabled={isSaving}
+                    />
+                    {formRows.length > 1 && (
+                      <button
+                        type="button"
+                        className="btn-remove-row"
+                        onClick={() => removeRow(idx)}
+                        disabled={isSaving}
+                        title="Remover linha"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                className="btn-add-row"
+                onClick={addRow}
+                disabled={isSaving}
+              >
+                + Adicionar andar
+              </button>
+
+              {/* Campos comuns */}
+              <div className="shared-section-label">Dados comuns (opcionais)</div>
+
+              <div className="form-grid">
+                <div className="form-group">
+                  <label className="form-label">Potência</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="EX: -18 DBM"
+                    value={sharedFields.power}
+                    onChange={(e) => setSharedFields(p => ({ ...p, power: e.target.value.toUpperCase() }))}
+                    disabled={isSaving}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Splitter</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="EX: 1:8"
+                    value={sharedFields.splitter}
+                    onChange={(e) => setSharedFields(p => ({ ...p, splitter: e.target.value.toUpperCase() }))}
+                    disabled={isSaving}
+                  />
+                </div>
+              </div>
+
               <div className="form-group">
-                <label className="form-label">Código da Caixa *</label>
-                <input
-                  type="text"
-                  name="code"
-                  className="form-input"
-                  placeholder="Ex: CTO-03, CTO-07B"
-                  value={formData.code}
-                  onChange={handleInputChange}
+                <label className="form-label">Informações Técnicas</label>
+                <textarea
+                  className="form-input form-textarea"
+                  placeholder="FIBRA PRINCIPAL ATIVA, RESERVA DISPONÍVEL..."
+                  value={sharedFields.technicalInfo}
+                  onChange={(e) => setSharedFields(p => ({ ...p, technicalInfo: e.target.value.toUpperCase() }))}
                   disabled={isSaving}
-                  autoFocus
+                  rows="2"
                 />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Observações</label>
+                <textarea
+                  className="form-input form-textarea"
+                  placeholder="ANOTAÇÕES ADICIONAIS..."
+                  value={sharedFields.observations}
+                  onChange={(e) => setSharedFields(p => ({ ...p, observations: e.target.value.toUpperCase() }))}
+                  disabled={isSaving}
+                  rows="2"
+                />
+              </div>
+
+              {saveResult && (
+                <div className={`batch-result ${saveResult.failed > 0 ? 'partial' : 'success'}`}>
+                  {saveResult.ok > 0 && `✓ ${saveResult.ok} caixa(s) criada(s). `}
+                  {saveResult.failed > 0 && `✕ ${saveResult.failed} falhou (código duplicado?).`}
+                </div>
+              )}
+
+              <div className="form-actions">
+                <button type="button" className="btn btn-secondary" onClick={closeForm} disabled={isSaving}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={isSaving}>
+                  {isSaving
+                    ? 'Salvando...'
+                    : `Criar ${formRows.filter(r => r.code.trim()).length || ''} caixa(s)`}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL EDITAR (único CTO) ── */}
+      {showCTOForm && editingCTOId && (
+        <div className="modal-overlay" onClick={closeForm}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">Editar Caixa CTO</h2>
+              <button className="modal-close" onClick={closeForm}>✕</button>
+            </div>
+
+            <form onSubmit={handleEditCTO}>
+              <div className="form-group">
+                <label className="form-label">Código *</label>
+                <div className="prefix-input-wrapper">
+                  <span className="input-prefix">GP</span>
+                  <input
+                    type="text"
+                    className="input-after-prefix"
+                    placeholder="001"
+                    value={editData.code}
+                    onChange={(e) => setEditData(p => ({ ...p, code: e.target.value.toUpperCase().replace(/^GP/i, '') }))}
+                    disabled={isSaving}
+                    autoFocus
+                  />
+                </div>
               </div>
 
               <div className="form-grid">
@@ -371,24 +487,21 @@ function BuildingDetailPage({ technician }) {
                   <label className="form-label">Andar</label>
                   <input
                     type="text"
-                    name="floor"
                     className="form-input"
-                    placeholder="Ex: 7º andar, Térreo"
-                    value={formData.floor}
-                    onChange={handleInputChange}
+                    placeholder="EX: 7º ANDAR"
+                    value={editData.floor}
+                    onChange={(e) => setEditData(p => ({ ...p, floor: e.target.value.toUpperCase() }))}
                     disabled={isSaving}
                   />
                 </div>
-
                 <div className="form-group">
                   <label className="form-label">Potência</label>
                   <input
                     type="text"
-                    name="power"
                     className="form-input"
-                    placeholder="Ex: -18 dBm"
-                    value={formData.power}
-                    onChange={handleInputChange}
+                    placeholder="EX: -18 DBM"
+                    value={editData.power}
+                    onChange={(e) => setEditData(p => ({ ...p, power: e.target.value.toUpperCase() }))}
                     disabled={isSaving}
                   />
                 </div>
@@ -398,67 +511,44 @@ function BuildingDetailPage({ technician }) {
                 <label className="form-label">Splitter</label>
                 <input
                   type="text"
-                  name="splitter"
                   className="form-input"
-                  placeholder="Ex: 1:8, 1:16, 1:32"
-                  value={formData.splitter}
-                  onChange={handleInputChange}
+                  placeholder="EX: 1:8, 1:16"
+                  value={editData.splitter}
+                  onChange={(e) => setEditData(p => ({ ...p, splitter: e.target.value.toUpperCase() }))}
                   disabled={isSaving}
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Técnico Responsável</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder={technician.name}
-                  disabled
-                  defaultValue={technician.name}
                 />
               </div>
 
               <div className="form-group">
                 <label className="form-label">Informações Técnicas</label>
                 <textarea
-                  name="technicalInfo"
                   className="form-input form-textarea"
-                  placeholder="Fibra principal ativa, Reserva disponível, Porta 04 ocupada, etc..."
-                  value={formData.technicalInfo}
-                  onChange={handleInputChange}
+                  placeholder="FIBRA PRINCIPAL ATIVA..."
+                  value={editData.technicalInfo}
+                  onChange={(e) => setEditData(p => ({ ...p, technicalInfo: e.target.value.toUpperCase() }))}
                   disabled={isSaving}
-                  rows="4"
+                  rows="3"
                 />
               </div>
 
               <div className="form-group">
                 <label className="form-label">Observações</label>
                 <textarea
-                  name="observations"
                   className="form-input form-textarea"
-                  placeholder="Anotações adicionais..."
-                  value={formData.observations}
-                  onChange={handleInputChange}
+                  placeholder="ANOTAÇÕES ADICIONAIS..."
+                  value={editData.observations}
+                  onChange={(e) => setEditData(p => ({ ...p, observations: e.target.value.toUpperCase() }))}
                   disabled={isSaving}
-                  rows="3"
+                  rows="2"
                 />
               </div>
 
               <div className="form-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={handleCancelForm}
-                  disabled={isSaving}
-                >
+                <button type="button" className="btn btn-secondary" onClick={closeForm} disabled={isSaving}>
                   Cancelar
                 </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={isSaving}
-                >
-                  {isSaving ? 'Salvando...' : editingCTOId ? 'Atualizar' : 'Criar'}
+                <button type="submit" className="btn btn-primary" disabled={isSaving}>
+                  {isSaving ? 'Salvando...' : 'Atualizar'}
                 </button>
               </div>
             </form>

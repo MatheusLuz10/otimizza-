@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { db, describeFieldChanges, safeLogAudit, saveSyncQueue } from '../db/dexie';
-import { syncAfterLocalChange } from '../services/sync';
+import { safeLogAudit, describeFieldChanges } from '../db/dexie';
+import {
+  fetchBuildings, fetchCTOs, createBuilding, updateBuilding, deleteBuilding, fromSupabaseBuilding
+} from '../services/supabase';
 import './BuildingsPage.css';
 
 function BuildingsPage({ technician }) {
   const [buildings, setBuildings] = useState([]);
   const [filteredBuildings, setFilteredBuildings] = useState([]);
+  const [ctoCountMap, setCtoCountMap] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ name: '', address: '', observations: '' });
@@ -48,10 +51,15 @@ function BuildingsPage({ technician }) {
 
   const loadBuildings = async () => {
     try {
-      const data = await db.buildings.toArray();
-      setBuildings(data);
+      const [buildingsData, ctosData] = await Promise.all([fetchBuildings(), fetchCTOs()]);
+      setBuildings(buildingsData.map(fromSupabaseBuilding));
+      const countMap = {};
+      ctosData.forEach(c => {
+        countMap[c.building_id] = (countMap[c.building_id] || 0) + 1;
+      });
+      setCtoCountMap(countMap);
     } catch (error) {
-      console.error('Error loading buildings:', error);
+      console.error('Erro ao carregar prédios:', error);
     }
   };
 
@@ -60,126 +68,76 @@ function BuildingsPage({ technician }) {
       setFilteredBuildings(buildings);
       return;
     }
-
     const term = searchTerm.toLowerCase();
-    const filtered = buildings.filter(b =>
-      b.name.toLowerCase().includes(term) ||
-      b.address.toLowerCase().includes(term)
+    setFilteredBuildings(
+      buildings.filter(b =>
+        b.name.toLowerCase().includes(term) ||
+        b.address.toLowerCase().includes(term)
+      )
     );
-    setFilteredBuildings(filtered);
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value.toUpperCase() }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (!formData.name.trim()) {
       alert('Nome do prédio é obrigatório');
       return;
     }
-
     setIsLoading(true);
-
     try {
-      const now = new Date();
-      
       if (editingId) {
-        // Update
-        const building = await db.buildings.get(editingId);
-        const updates = {
+        const building = buildings.find(b => b.id === editingId);
+        await updateBuilding(editingId, {
           ...formData,
-          updatedAt: now,
-          syncStatus: 'pending'
-        };
-        
-        await db.buildings.update(editingId, updates);
-        await saveSyncQueue('building', 'update', editingId, updates);
+          createdBy: building?.createdBy,
+          createdAt: building?.createdAt
+        });
         await safeLogAudit(
-          'update_building',
-          technician.name,
-          technician.registration,
-          editingId,
-          null,
-          describeFieldChanges(building, updates, {
-            name: 'Nome',
-            address: 'Endereço',
-            observations: 'Observações'
-          })
+          'update_building', technician.name, technician.registration, editingId, null,
+          describeFieldChanges(building, formData, { name: 'Nome', address: 'Endereço', observations: 'Observações' })
         );
       } else {
-        // Create
-        const newBuilding = {
-          ...formData,
-          createdBy: technician.name,
-          createdAt: now,
-          updatedAt: now,
-          syncStatus: 'pending'
-        };
-        
-        const id = await db.buildings.add(newBuilding);
-        await saveSyncQueue('building', 'create', id, newBuilding);
+        const result = await createBuilding({ ...formData, createdBy: technician.name });
         await safeLogAudit(
-          'create_building',
-          technician.name,
-          technician.registration,
-          id,
-          null,
-          `Prédio "${newBuilding.name}" criado`
+          'create_building', technician.name, technician.registration, result.id, null,
+          `Prédio "${formData.name}" criado`
         );
       }
-
       setFormData({ name: '', address: '', observations: '' });
       setEditingId(null);
       setShowForm(false);
       await loadBuildings();
-      await syncAfterLocalChange();
     } catch (error) {
-      const message = error?.name === 'ConstraintError'
-        ? 'Ja existe um predio com esse nome.'
-        : `Erro ao salvar predio: ${error?.message || 'verifique os dados informados'}`;
+      const message = error?.code === '23505'
+        ? 'Já existe um prédio com esse nome.'
+        : `Erro ao salvar prédio: ${error?.message || 'verifique os dados informados'}`;
       alert(message);
-      console.error('Error saving building:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleEdit = (building) => {
-    setFormData({
-      name: building.name,
-      address: building.address,
-      observations: building.observations
-    });
+    setFormData({ name: building.name, address: building.address, observations: building.observations });
     setEditingId(building.id);
     setShowForm(true);
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Tem certeza que deseja deletar este prédio?')) {
-      return;
-    }
-
+    if (!confirm('Tem certeza que deseja deletar este prédio?')) return;
     try {
-      const building = await db.buildings.get(id);
-      await db.buildings.delete(id);
-      await saveSyncQueue('building', 'delete', id, { remoteId: building?.remoteId || null });
+      const building = buildings.find(b => b.id === id);
+      await deleteBuilding(id);
       await safeLogAudit(
-        'delete_building',
-        technician.name,
-        technician.registration,
-        id,
-        null,
+        'delete_building', technician.name, technician.registration, id, null,
         `Prédio "${building?.name || id}" deletado`
       );
       await loadBuildings();
-      await syncAfterLocalChange();
     } catch (error) {
       alert('Erro ao deletar prédio');
       console.error('Error deleting building:', error);
@@ -202,22 +160,23 @@ function BuildingsPage({ technician }) {
         <h1 className="page-title">Prédios</h1>
       </div>
 
-      <div className="page-content">
-        <div className="search-box">
-          <input
-            type="text"
-            placeholder="Buscar por nome ou endereço..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+      <div className="search-sticky">
+        <input
+          type="text"
+          className="search-input"
+          placeholder="Buscar por nome ou endereço..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
 
+      <div className="page-content">
         {filteredBuildings.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon">🏢</div>
             <div className="empty-state-title">Nenhum prédio encontrado</div>
             <div className="empty-state-text">
-              {buildings.length === 0 
+              {buildings.length === 0
                 ? 'Comece cadastrando o primeiro prédio'
                 : 'Nenhum resultado para sua busca'}
             </div>
@@ -229,41 +188,39 @@ function BuildingsPage({ technician }) {
           <>
             <div className="buildings-list">
               {filteredBuildings.map(building => (
-                <div key={building.id} className="card">
-                  <div className="card-header">
-                    <div onClick={() => handleViewCTOs(building.id)} style={{ cursor: 'pointer', flex: 1 }}>
-                      <h3 className="card-title">{building.name}</h3>
-                      {building.address && (
-                        <p className="card-subtitle">📍 {building.address}</p>
-                      )}
-                    </div>
-                    <span className={`badge badge-${building.syncStatus === 'pending' ? 'warning' : 'success'}`}>
-                      {building.syncStatus === 'pending' ? '⟳ Não sincronizado' : '✓ Sincronizado'}
-                    </span>
+                <div
+                  key={building.id}
+                  className="building-row"
+                  onClick={() => handleViewCTOs(building.id)}
+                >
+                  <div className="building-row-info">
+                    <span className="building-row-name">{building.name}</span>
+                    {building.address && (
+                      <span className="building-row-address">📍 {building.address}</span>
+                    )}
                   </div>
 
-                  {building.observations && (
-                    <p className="card-observations">{building.observations}</p>
-                  )}
+                  <div className="building-row-count">
+                    <span className="cto-count-num">{ctoCountMap[building.id] || 0}</span>
+                    <span className="cto-count-lbl">CTO{(ctoCountMap[building.id] || 0) !== 1 ? 's' : ''}</span>
+                  </div>
 
-                  <div className="card-actions">
+                  <div className="building-row-actions" onClick={(e) => e.stopPropagation()}>
                     <button
-                      className="btn btn-primary btn-small"
-                      onClick={() => handleViewCTOs(building.id)}
-                    >
-                      📦 Ver Caixas
-                    </button>
-                    <button
-                      className="btn btn-secondary btn-small"
+                      className="icon-btn icon-btn-edit"
                       onClick={() => handleEdit(building)}
+                      title="Editar prédio"
+                      aria-label="Editar prédio"
                     >
-                      ✏️ Editar
+                      ✏️
                     </button>
                     <button
-                      className="btn btn-danger btn-small"
+                      className="icon-btn icon-btn-delete"
                       onClick={() => handleDelete(building.id)}
+                      title="Deletar prédio"
+                      aria-label="Deletar prédio"
                     >
-                      🗑️ Deletar
+                      🗑️
                     </button>
                   </div>
                 </div>
@@ -271,10 +228,7 @@ function BuildingsPage({ technician }) {
             </div>
 
             <div className="sticky-add-button">
-              <button
-                className="btn btn-primary btn-block"
-                onClick={() => setShowForm(true)}
-              >
+              <button className="btn btn-primary btn-block" onClick={() => setShowForm(true)}>
                 ➕ Novo Prédio
               </button>
             </div>
@@ -286,9 +240,7 @@ function BuildingsPage({ technician }) {
         <div className="modal-overlay" onClick={handleCancel}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2 className="modal-title">
-                {editingId ? 'Editar Prédio' : 'Novo Prédio'}
-              </h2>
+              <h2 className="modal-title">{editingId ? 'Editar Prédio' : 'Novo Prédio'}</h2>
               <button className="modal-close" onClick={handleCancel}>✕</button>
             </div>
 
@@ -306,7 +258,6 @@ function BuildingsPage({ technician }) {
                   autoFocus
                 />
               </div>
-
               <div className="form-group">
                 <label className="form-label">Endereço</label>
                 <input
@@ -319,7 +270,6 @@ function BuildingsPage({ technician }) {
                   disabled={isLoading}
                 />
               </div>
-
               <div className="form-group">
                 <label className="form-label">Observações</label>
                 <textarea
@@ -331,21 +281,11 @@ function BuildingsPage({ technician }) {
                   disabled={isLoading}
                 />
               </div>
-
               <div className="form-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={handleCancel}
-                  disabled={isLoading}
-                >
+                <button type="button" className="btn btn-secondary" onClick={handleCancel} disabled={isLoading}>
                   Cancelar
                 </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={isLoading}
-                >
+                <button type="submit" className="btn btn-primary" disabled={isLoading}>
                   {isLoading ? 'Salvando...' : editingId ? 'Atualizar' : 'Criar'}
                 </button>
               </div>

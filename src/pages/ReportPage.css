@@ -1,0 +1,195 @@
+.report-filters {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 12px;
+  margin-bottom: 8px;
+}
+
+.report-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.report-copy-feedback {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--premium-success);
+  margin-bottom: 16px;
+}
+
+.report-summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.report-summary .summary-item {
+  background: var(--premium-surface);
+  border: 1px solid var(--premium-border);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.report-summary .summary-value {
+  color: var(--premium-primary);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.report-summary .summary-label {
+  color: var(--premium-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.report-list {
+  display: grid;
+  gap: 12px;
+}
+
+.report-card {
+  cursor: default;
+}
+
+/* Cabeçalho do prédio: nome/endereço viram descrição secundária —
+   o destaque do card é o código da caixa, listado abaixo. */
+.report-building-header {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+
+.report-building-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--premium-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.report-building-address {
+  font-size: 12px;
+  color: var(--premium-text-tertiary);
+}
+
+.report-building-count {
+  margin-left: auto;
+}
+
+.report-building-meta {
+  font-size: 12px;
+  color: var(--premium-text-tertiary);
+  margin: 4px 0 0 0;
+}
+
+.report-cto-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--premium-border);
+}
+
+.report-cto-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--premium-border);
+}
+
+.report-cto-row:last-child {
+  border-bottom: none;
+}
+
+.report-cto-code {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--premium-text);
+  letter-spacing: 0.3px;
+}
+
+.report-cto-meta {
+  font-size: 12px;
+  color: var(--premium-text-secondary);
+}
+
+@media print {
+  .page-header,
+  .report-filters,
+  .report-actions,
+  .report-copy-feedback,
+  .bottom-nav {
+    display: none !important;
+  }
+
+  .page {
+    background: white !important;
+    color: #111 !important;
+    padding: 0 !important;
+  }
+
+  .report-summary .summary-item {
+    background: white !important;
+    border: 1px solid #ccc !important;
+  }
+
+  .report-summary .summary-value,
+  .report-cto-code {
+    color: #111 !important;
+  }
+
+  .report-list {
+    gap: 8px;
+  }
+
+  .report-card {
+    background: white !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    padding: 12px !important;
+    break-inside: avoid;
+  }
+
+  .report-building-name,
+  .report-building-meta,
+  .report-cto-meta {
+    color: #555 !important;
+  }
+
+  .report-building-address {
+    color: #777 !important;
+  }
+
+  .report-building-count.badge {
+    background: none !important;
+    border: 1px solid #999 !important;
+    color: #333 !important;
+  }
+
+  .report-cto-row {
+    border-bottom-color: #ddd !important;
+  }
+
+  .card-observations {
+    background: none !important;
+    border-left: 2px solid #999 !important;
+    color: #555 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .report-filters {
+    grid-template-columns: 1fr;
+  }
+}

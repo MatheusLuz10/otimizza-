@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
-import { db, describeFieldChanges, safeLogAudit, saveSyncQueue } from '../db/dexie';
-import { syncAfterLocalChange } from '../services/sync';
+import { safeLogAudit, describeFieldChanges } from '../db/dexie';
+import {
+  fetchBuildings, fetchCTOs, createCTO, updateCTO, deleteCTO,
+  fromSupabaseBuilding, fromSupabaseCTO
+} from '../services/supabase';
 import './CTOsPage.css';
 
 function CTOsPage({ technician }) {
@@ -10,12 +13,8 @@ function CTOsPage({ technician }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterBuilding, setFilterBuilding] = useState('');
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ 
-    code: '', 
-    buildingId: '', 
-    ports: '', 
-    splitter: '', 
-    observations: '' 
+  const [formData, setFormData] = useState({
+    code: '', buildingId: '', ports: '', splitter: '', observations: ''
   });
   const [editingId, setEditingId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,10 +25,6 @@ function CTOsPage({ technician }) {
     window.addEventListener('db:updated', handleDbUpdate);
     return () => window.removeEventListener('db:updated', handleDbUpdate);
   }, []);
-
-  useEffect(() => {
-    filterCTOs();
-  }, [ctos, searchTerm, filterBuilding]);
 
   useEffect(() => {
     const handleNavNew = () => setShowForm(true);
@@ -44,31 +39,29 @@ function CTOsPage({ technician }) {
     };
   }, []);
 
+  useEffect(() => {
+    filterCTOs();
+  }, [ctos, searchTerm, filterBuilding]);
+
   const loadData = async () => {
     try {
-      const buildingsData = await db.buildings.toArray();
-      const ctosData = await db.ctos.toArray();
-      setBuildings(buildingsData);
-      setCTOs(ctosData);
+      const [buildingsData, ctosData] = await Promise.all([fetchBuildings(), fetchCTOs()]);
+      setBuildings(buildingsData.map(fromSupabaseBuilding));
+      setCTOs(ctosData.map(fromSupabaseCTO));
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Erro ao carregar dados:', error);
     }
   };
 
   const filterCTOs = () => {
     let filtered = ctos;
-
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(c =>
-        c.code.toLowerCase().includes(term)
-      );
+      filtered = filtered.filter(c => c.code.toLowerCase().includes(term));
     }
-
     if (filterBuilding) {
       filtered = filtered.filter(c => c.buildingId === parseInt(filterBuilding));
     }
-
     setFilteredCTOs(filtered);
   };
 
@@ -79,73 +72,36 @@ function CTOsPage({ technician }) {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value.toUpperCase() }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (!formData.code.trim() || !formData.buildingId) {
       alert('Código da caixa e prédio vinculado são obrigatórios');
       return;
     }
-
     setIsLoading(true);
-
     try {
-      const now = new Date();
-      
+      const buildingId = parseInt(formData.buildingId);
+      const fields = {
+        ...formData,
+        buildingId,
+        ports: formData.ports ? parseInt(formData.ports) : null
+      };
+
       if (editingId) {
-        // Update
-        const cto = await db.ctos.get(editingId);
-        const updates = {
-          ...formData,
-          buildingId: parseInt(formData.buildingId),
-          ports: formData.ports ? parseInt(formData.ports) : null,
-          updatedAt: now,
-          syncStatus: 'pending'
-        };
-        
-        await db.ctos.update(editingId, updates);
-        await saveSyncQueue('cto', 'update', editingId, updates);
+        const cto = ctos.find(c => c.id === editingId);
+        await updateCTO(editingId, { ...fields, code: 'GP' + fields.code.replace(/^GP/i, ''), createdBy: cto?.createdBy, createdAt: cto?.createdAt }, buildingId);
         await safeLogAudit(
-          'update_cto',
-          technician.name,
-          technician.registration,
-          updates.buildingId,
-          editingId,
-          describeFieldChanges(cto, updates, {
-            code: 'Código',
-            buildingId: 'Prédio',
-            ports: 'Portas',
-            splitter: 'Splitter',
-            observations: 'Observações'
-          })
+          'update_cto', technician.name, technician.registration, buildingId, editingId,
+          describeFieldChanges(cto, fields, { code: 'Código', splitter: 'Splitter', observations: 'Observações' })
         );
       } else {
-        // Create
-        const newCTO = {
-          ...formData,
-          buildingId: parseInt(formData.buildingId),
-          ports: formData.ports ? parseInt(formData.ports) : null,
-          createdBy: technician.name,
-          createdAt: now,
-          updatedAt: now,
-          syncStatus: 'pending'
-        };
-        
-        const id = await db.ctos.add(newCTO);
-        await saveSyncQueue('cto', 'create', id, newCTO);
+        const result = await createCTO({ ...fields, code: 'GP' + fields.code.replace(/^GP/i, ''), createdBy: technician.name }, buildingId);
         await safeLogAudit(
-          'create_cto',
-          technician.name,
-          technician.registration,
-          newCTO.buildingId,
-          id,
-          `Caixa ${newCTO.code} criada`
+          'create_cto', technician.name, technician.registration, buildingId, result.id,
+          `Caixa GP${fields.code.replace(/^GP/i, '')} criada`
         );
       }
 
@@ -153,21 +109,20 @@ function CTOsPage({ technician }) {
       setEditingId(null);
       setShowForm(false);
       await loadData();
-      await syncAfterLocalChange();
     } catch (error) {
-      const message = error?.name === 'ConstraintError'
-        ? 'Ja existe uma CTO com esse codigo.'
-        : `Erro ao salvar caixa CTO: ${error?.message || 'verifique os dados informados'}`;
+      const message = error?.code === '23505'
+        ? 'Já existe uma CTO com esse código.'
+        : `Erro ao salvar caixa CTO: ${error?.message || ''}`;
       alert(message);
-      console.error('Error saving CTO:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleEdit = (cto) => {
+    const codeNum = cto.code?.toUpperCase().startsWith('GP') ? cto.code.slice(2) : (cto.code || '');
     setFormData({
-      code: cto.code,
+      code: codeNum,
       buildingId: cto.buildingId.toString(),
       ports: cto.ports?.toString() || '',
       splitter: cto.splitter || '',
@@ -178,27 +133,19 @@ function CTOsPage({ technician }) {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Tem certeza que deseja deletar esta caixa CTO?')) {
-      return;
-    }
-
+    if (!confirm('Tem certeza que deseja deletar esta caixa CTO?')) return;
     try {
-      const cto = await db.ctos.get(id);
-      await db.ctos.delete(id);
-      await saveSyncQueue('cto', 'delete', id, { remoteId: cto?.remoteId || null });
+      const cto = ctos.find(c => c.id === id);
+      await deleteCTO(id);
       await safeLogAudit(
-        'delete_cto',
-        technician.name,
-        technician.registration,
-        cto?.buildingId || null,
-        id,
+        'delete_cto', technician.name, technician.registration,
+        cto?.buildingId || null, id,
         `Caixa ${cto?.code || id} deletada`
       );
       await loadData();
-      await syncAfterLocalChange();
     } catch (error) {
       alert('Erro ao deletar caixa CTO');
-      console.error('Error deleting CTO:', error);
+      console.error(error);
     }
   };
 
@@ -224,17 +171,14 @@ function CTOsPage({ technician }) {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-
-          <select 
+          <select
             className="form-input"
             value={filterBuilding}
             onChange={(e) => setFilterBuilding(e.target.value)}
           >
             <option value="">Todos os prédios</option>
             {buildings.map(building => (
-              <option key={building.id} value={building.id}>
-                {building.name}
-              </option>
+              <option key={building.id} value={building.id}>{building.name}</option>
             ))}
           </select>
         </div>
@@ -244,7 +188,7 @@ function CTOsPage({ technician }) {
             <div className="empty-state-icon">📦</div>
             <div className="empty-state-title">Nenhuma caixa CTO encontrada</div>
             <div className="empty-state-text">
-              {ctos.length === 0 
+              {ctos.length === 0
                 ? 'Comece cadastrando a primeira caixa CTO'
                 : 'Nenhum resultado para sua busca'}
             </div>
@@ -259,12 +203,10 @@ function CTOsPage({ technician }) {
                 <div key={cto.id} className="card">
                   <div className="card-header">
                     <div>
-                      <h3 className="card-title">🔹 {cto.code}</h3>
-                      <p className="card-subtitle">📍 {getBuildingName(cto.buildingId)}</p>
+                      <h3 className="card-title cto-code-title">{cto.code}</h3>
+                      <p className="card-subtitle">{getBuildingName(cto.buildingId)}</p>
                     </div>
-                    <span className={`badge badge-${cto.syncStatus === 'pending' ? 'warning' : 'success'}`}>
-                      {cto.syncStatus === 'pending' ? '⟳' : '✓'}
-                    </span>
+                    <span className="badge badge-success">✓</span>
                   </div>
 
                   <div className="cto-details">
@@ -286,18 +228,12 @@ function CTOsPage({ technician }) {
                     <p className="card-observations">{cto.observations}</p>
                   )}
 
-                  <div className="card-actions">
-                    <button
-                      className="btn btn-secondary btn-small"
-                      onClick={() => handleEdit(cto)}
-                    >
-                      ✏️ Editar
+                  <div className="card-actions card-actions-icons">
+                    <button className="icon-btn icon-btn-edit" onClick={() => handleEdit(cto)} title="Editar" aria-label="Editar">
+                      ✏️
                     </button>
-                    <button
-                      className="btn btn-danger btn-small"
-                      onClick={() => handleDelete(cto.id)}
-                    >
-                      🗑️ Deletar
+                    <button className="icon-btn icon-btn-delete" onClick={() => handleDelete(cto.id)} title="Deletar" aria-label="Deletar">
+                      🗑️
                     </button>
                   </div>
                 </div>
@@ -305,10 +241,7 @@ function CTOsPage({ technician }) {
             </div>
 
             <div className="sticky-add-button">
-              <button
-                className="btn btn-primary btn-block"
-                onClick={() => setShowForm(true)}
-              >
+              <button className="btn btn-primary btn-block" onClick={() => setShowForm(true)}>
                 ➕ Nova Caixa CTO
               </button>
             </div>
@@ -320,98 +253,59 @@ function CTOsPage({ technician }) {
         <div className="modal-overlay" onClick={handleCancel}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2 className="modal-title">
-                {editingId ? 'Editar Caixa CTO' : 'Nova Caixa CTO'}
-              </h2>
+              <h2 className="modal-title">{editingId ? 'Editar Caixa CTO' : 'Nova Caixa CTO'}</h2>
               <button className="modal-close" onClick={handleCancel}>✕</button>
             </div>
 
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label className="form-label">Código da Caixa *</label>
-                <input
-                  type="text"
-                  name="code"
-                  className="form-input"
-                  placeholder="Ex: CTO-001, CTO-A-01"
-                  value={formData.code}
-                  onChange={handleInputChange}
-                  disabled={isLoading}
-                  autoFocus
-                />
+                <label className="form-label">Código *</label>
+                <div className="prefix-input-wrapper">
+                  <span className="input-prefix">GP</span>
+                  <input
+                    type="text"
+                    className="input-after-prefix"
+                    placeholder="001"
+                    value={formData.code}
+                    onChange={(e) => setFormData(p => ({ ...p, code: e.target.value.toUpperCase().replace(/^GP/i, '') }))}
+                    disabled={isLoading}
+                    autoFocus
+                  />
+                </div>
               </div>
-
               <div className="form-group">
-                <label className="form-label">Prédio Vinculado *</label>
-                <select
-                  name="buildingId"
-                  className="form-input"
-                  value={formData.buildingId}
-                  onChange={handleInputChange}
-                  disabled={isLoading}
-                >
-                  <option value="">Selecionar um prédio...</option>
-                  {buildings.map(building => (
-                    <option key={building.id} value={building.id}>
-                      {building.name}
-                    </option>
+                <label className="form-label">Prédio *</label>
+                <select name="buildingId" className="form-input"
+                  value={formData.buildingId} onChange={handleInputChange} disabled={isLoading}>
+                  <option value="">Selecione o prédio</option>
+                  {buildings.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
                   ))}
                 </select>
               </div>
-
               <div className="form-group">
-                <label className="form-label">Quantidade de Portas</label>
-                <input
-                  type="number"
-                  name="ports"
-                  className="form-input"
-                  placeholder="Ex: 16, 24, 48"
-                  value={formData.ports}
-                  onChange={handleInputChange}
-                  disabled={isLoading}
-                  min="0"
-                />
+                <label className="form-label">Portas</label>
+                <input type="number" name="ports" className="form-input"
+                  placeholder="Ex: 8, 16, 32" value={formData.ports}
+                  onChange={handleInputChange} disabled={isLoading} />
               </div>
-
               <div className="form-group">
                 <label className="form-label">Splitter</label>
-                <input
-                  type="text"
-                  name="splitter"
-                  className="form-input"
-                  placeholder="Ex: 1:16, 1:32, PLC"
-                  value={formData.splitter}
-                  onChange={handleInputChange}
-                  disabled={isLoading}
-                />
+                <input type="text" name="splitter" className="form-input"
+                  placeholder="Ex: 1:8, 1:16" value={formData.splitter}
+                  onChange={handleInputChange} disabled={isLoading} />
               </div>
-
               <div className="form-group">
                 <label className="form-label">Observações</label>
-                <textarea
-                  name="observations"
-                  className="form-input form-textarea"
-                  placeholder="Anotações adicionais..."
-                  value={formData.observations}
-                  onChange={handleInputChange}
-                  disabled={isLoading}
-                />
+                <textarea name="observations" className="form-input form-textarea"
+                  placeholder="Anotações adicionais..." value={formData.observations}
+                  onChange={handleInputChange} disabled={isLoading} />
               </div>
-
               <div className="form-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={handleCancel}
-                  disabled={isLoading}
-                >
+                <button type="button" className="btn btn-secondary" onClick={handleCancel} disabled={isLoading}>
                   Cancelar
                 </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={isLoading}
-                >
+                <button type="submit" className="btn btn-primary" disabled={isLoading}>
                   {isLoading ? 'Salvando...' : editingId ? 'Atualizar' : 'Criar'}
                 </button>
               </div>

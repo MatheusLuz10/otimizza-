@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { getTechnician } from './db/dexie';
-import { setupAutoSync, startPeriodicSync, setupRealtimeSync } from './services/sync';
+import { getTechnician, clearTechnician } from './db/dexie';
+import { setupRealtimeSync } from './services/sync';
+import { isAuthConfigured, getSession, signOut, onAuthStateChange } from './services/supabase';
 
 // Pages
 import LoginPage from './pages/LoginPage';
@@ -10,6 +11,7 @@ import BuildingsPage from './pages/BuildingsPage';
 import CTOsPage from './pages/CTOsPage';
 import BuildingDetailPage from './pages/BuildingDetailPage';
 import ChangesPage from './pages/ChangesPage';
+import ReportPage from './pages/ReportPage';
 
 import './App.css';
 
@@ -39,18 +41,18 @@ function BottomNav() {
   return (
     <nav className="bottom-nav">
       <button
+        className={`nav-item nav-item-home ${location.pathname === '/' ? 'active' : ''}`}
+        onClick={() => navigate('/')}
+      >
+        <span className="nav-icon">🏠</span>
+        <span>Início</span>
+      </button>
+      <button
         className={`nav-item ${isBuildingsActive ? 'active' : ''}`}
         onClick={() => navigate('/buildings')}
       >
         <span className="nav-icon">🏢</span>
         <span>Prédios</span>
-      </button>
-      <button
-        className={`nav-item ${isCTOsActive ? 'active' : ''}`}
-        onClick={() => navigate('/ctos')}
-      >
-        <span className="nav-icon">📦</span>
-        <span>CTOs</span>
       </button>
       <button
         className="nav-item nav-item-new"
@@ -60,18 +62,18 @@ function BottomNav() {
         <span>Novo</span>
       </button>
       <button
+        className={`nav-item ${isCTOsActive ? 'active' : ''}`}
+        onClick={() => navigate('/ctos')}
+      >
+        <span className="nav-icon">📦</span>
+        <span>CTOs</span>
+      </button>
+      <button
         className="nav-item"
         onClick={handleSearch}
       >
         <span className="nav-icon">🔍</span>
         <span>Buscar</span>
-      </button>
-      <button
-        className={`nav-item ${location.pathname === '/' ? 'active' : ''}`}
-        onClick={() => navigate('/')}
-      >
-        <span className="nav-icon">⚙️</span>
-        <span>Config</span>
       </button>
     </nav>
   );
@@ -95,6 +97,7 @@ function AppRoutes({ technician, onLogin, onLogout }) {
         <Route path="/buildings/:id" element={<BuildingDetailPage technician={technician} />} />
         <Route path="/ctos" element={<CTOsPage technician={technician} />} />
         <Route path="/changes" element={<ChangesPage />} />
+        <Route path="/report" element={<ReportPage />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
       <BottomNav />
@@ -108,30 +111,47 @@ function App() {
 
   useEffect(() => {
     const loadTechnician = async () => {
+      if (isAuthConfigured()) {
+        const session = await getSession();
+        if (!session) {
+          setTechnician(null);
+          setIsLoading(false);
+          return;
+        }
+      }
+
       const tech = await getTechnician();
       setTechnician(tech);
       setIsLoading(false);
 
       if (tech) {
-        setupAutoSync();
-        startPeriodicSync();
         setupRealtimeSync();
       }
     };
 
     loadTechnician();
+
+    const unsubscribe = onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        setTechnician(null);
+        clearTechnician();
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handleLogin = (tech) => {
     setTechnician(tech);
-    setupAutoSync();
-    startPeriodicSync();
     setupRealtimeSync();
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (isAuthConfigured()) {
+      await signOut();
+    }
+    await clearTechnician();
     setTechnician(null);
-    localStorage.removeItem('technician');
   };
 
   if (isLoading) {

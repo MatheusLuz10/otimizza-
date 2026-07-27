@@ -7,10 +7,10 @@
    COLOR VARIABLES - Enterprise Corporate Palette
    ───────────────────────────────────────────────────────────────────────────── */
 :root {
-  --premium-bg: #111318;
-  --premium-surface: #1A1F29;
-  --premium-card: #202632;
-  --premium-input: #1A1F29;
+  --premium-bg: #1C212B;
+  --premium-surface: #262D3A;
+  --premium-card: #2C3444;
+  --premium-input: #262D3A;
   --premium-primary: #4A84D9;
   --premium-primary-light: #5A94E9;
   --premium-primary-dark: #3A74C9;
@@ -18,8 +18,8 @@
   --premium-text: #F0F4FF;
   --premium-text-secondary: #C2CEDE;
   --premium-text-tertiary: #8FA0B4;
-  --premium-border: rgba(255,255,255,0.05);
-  --premium-border-light: rgba(255,255,255,0.08);
+  --premium-border: rgba(255,255,255,0.08);
+  --premium-border-light: rgba(255,255,255,0.12);
   --premium-success: #3FA37C;
   --premium-warning: #D4A547;
   --premium-danger: #D96B6B;
@@ -33,6 +33,22 @@
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.3);
   --shadow-xl: 0 12px 40px rgba(0, 0, 0, 0.35);
+
+  /* Aliases so older components (still styled with the original
+     light-theme variable names) automatically pick up dark-theme
+     colors instead of leaving dark-on-dark or light-on-dark text. */
+  --primary-color: var(--premium-primary);
+  --primary-dark: var(--premium-primary-dark);
+  --primary-light: var(--premium-primary-light);
+  --background: var(--premium-bg);
+  --surface: var(--premium-surface);
+  --text-primary: var(--premium-text);
+  --text-secondary: var(--premium-text-secondary);
+  --border-color: var(--premium-border);
+  --shadow: var(--shadow-sm);
+  --success-color: var(--premium-success);
+  --danger-color: var(--premium-danger);
+  --warning-color: var(--premium-warning);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -46,6 +62,71 @@ body {
 
 html, body, #root {
   background: var(--premium-bg);
+}
+
+/* Todos os campos de texto em maiúsculo */
+input:not([type="number"]):not([type="password"]),
+textarea {
+  text-transform: uppercase;
+}
+
+input::placeholder,
+textarea::placeholder {
+  text-transform: none;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   INPUT COM PREFIXO FIXO (ex: GP)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.prefix-input-wrapper {
+  display: flex;
+  align-items: stretch;
+  background: rgba(50, 58, 74, 0.5);
+  border: 1px solid var(--premium-border);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.prefix-input-wrapper:focus-within {
+  border-color: var(--premium-primary);
+  background: rgba(50, 58, 74, 0.85);
+}
+
+.input-prefix {
+  padding: 0 12px 0 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--premium-primary);
+  background: rgba(74, 132, 217, 0.1);
+  border-right: 1px solid var(--premium-border);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+  user-select: none;
+}
+
+.input-after-prefix {
+  flex: 1;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--premium-text);
+  text-transform: uppercase;
+  min-width: 0;
+}
+
+.input-after-prefix:focus {
+  outline: none;
+}
+
+.input-after-prefix::placeholder {
+  color: var(--premium-text-tertiary);
+  text-transform: none;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -67,7 +148,7 @@ html, body, #root {
    ───────────────────────────────────────────────────────────────────────────── */
 
 .page {
-  background: linear-gradient(135deg, var(--premium-bg) 0%, #0F1117 100%);
+  background: linear-gradient(135deg, var(--premium-bg) 0%, #171B24 100%);
   min-height: 100vh;
   padding-bottom: 88px;
 }
@@ -80,7 +161,7 @@ html, body, #root {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: rgba(24, 27, 35, 0.7);
+  background: rgba(34, 40, 52, 0.7);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--premium-border);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
@@ -96,7 +177,6 @@ html, body, #root {
   color: var(--premium-text);
   letter-spacing: -0.5px;
   margin: 0;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -114,7 +194,7 @@ html, body, #root {
    ───────────────────────────────────────────────────────────────────────────── */
 
 .card {
-  background: rgba(31, 36, 48, 0.4);
+  background: rgba(44, 52, 68, 0.4);
   border: 1px solid var(--premium-border);
   border-radius: 12px;
   padding: 16px;
@@ -126,25 +206,10 @@ html, body, #root {
   overflow: hidden;
 }
 
-.card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(27, 145, 255, 0.05) 0%, transparent 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-}
-
 .card:hover {
-  background: rgba(31, 36, 48, 0.6);
+  background: rgba(44, 52, 68, 0.6);
   border-color: var(--premium-border-light);
   box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
-}
-
-.card:hover::before {
-  opacity: 1;
 }
 
 .card-header {
@@ -179,24 +244,13 @@ html, body, #root {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   font-family: inherit;
   letter-spacing: 0.3px;
-  position: relative;
-  overflow: hidden;
-}
-
-.btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
-  opacity: 0;
-  transition: opacity 0.3s ease;
 }
 
 .btn:active {
@@ -205,27 +259,20 @@ html, body, #root {
 
 /* Primary Button */
 .btn-primary {
-  background: linear-gradient(135deg, var(--premium-primary) 0%, var(--premium-primary-dark) 100%);
+  background: var(--premium-primary);
   color: white;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(59, 163, 255, 0.4);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-primary:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-  transform: translateY(-2px);
-  background: linear-gradient(135deg, var(--premium-primary-light) 0%, var(--premium-primary) 100%);
-}
-
-.btn-primary:hover::before {
-  opacity: 1;
+  background: var(--premium-primary-light);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   box-shadow: none;
-  transform: none;
 }
 
 /* Secondary Button */
@@ -247,30 +294,68 @@ html, body, #root {
 .btn-success {
   background: var(--premium-success);
   color: white;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-success:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 /* Danger Button */
 .btn-danger {
   background: var(--premium-danger);
   color: white;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-danger:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-small {
   padding: 8px 12px;
   font-size: 12px;
   border-radius: 6px;
+}
+
+/* Icon-only actions (editar/deletar) — ghost buttons, no label */
+.icon-btn {
+  background: transparent;
+  border: 1px solid var(--premium-border);
+  color: var(--premium-text-secondary);
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--premium-border-light);
+}
+
+.icon-btn-edit:hover {
+  color: var(--premium-primary);
+  border-color: rgba(74, 132, 217, 0.35);
+  background: rgba(74, 132, 217, 0.1);
+}
+
+.icon-btn-delete:hover {
+  color: var(--premium-danger);
+  border-color: rgba(217, 107, 107, 0.35);
+  background: rgba(217, 107, 107, 0.1);
+}
+
+.card-actions-icons {
+  justify-content: flex-end;
 }
 
 .btn-sm {
@@ -312,7 +397,7 @@ html, body, #root {
 .form-input {
   width: 100%;
   padding: 12px 14px;
-  background: rgba(37, 45, 56, 0.5);
+  background: rgba(50, 58, 74, 0.5);
   border: 1px solid var(--premium-border);
   border-radius: 8px;
   font-size: 14px;
@@ -329,12 +414,11 @@ html, body, #root {
 .form-input:focus {
   outline: none;
   border-color: var(--premium-primary);
-  background: rgba(37, 45, 56, 0.8);
-  box-shadow: 0 0 0 3px rgba(27, 145, 255, 0.1);
+  background: rgba(50, 58, 74, 0.8);
 }
 
 .form-input:disabled {
-  background: rgba(37, 45, 56, 0.3);
+  background: rgba(50, 58, 74, 0.3);
   color: var(--premium-text-secondary);
   cursor: not-allowed;
   opacity: 0.6;
@@ -405,7 +489,7 @@ html, body, #root {
 .search-box input {
   flex: 1;
   padding: 12px 14px;
-  background: rgba(37, 45, 56, 0.5);
+  background: rgba(50, 58, 74, 0.5);
   border: 1px solid var(--premium-border);
   border-radius: 8px;
   font-size: 14px;
@@ -417,8 +501,7 @@ html, body, #root {
 .search-box input:focus {
   outline: none;
   border-color: var(--premium-primary);
-  background: rgba(37, 45, 56, 0.8);
-  box-shadow: 0 0 0 3px rgba(27, 145, 255, 0.1);
+  background: rgba(50, 58, 74, 0.8);
 }
 
 .search-box button {
@@ -448,7 +531,7 @@ html, body, #root {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(16, 19, 26, 0.7);
+  background: rgba(28, 33, 43, 0.7);
   backdrop-filter: blur(6px);
   display: flex;
   align-items: flex-end;
@@ -468,7 +551,7 @@ html, body, #root {
 }
 
 .modal {
-  background: linear-gradient(135deg, rgba(24, 27, 35, 0.95) 0%, rgba(31, 36, 48, 0.9) 100%);
+  background: linear-gradient(135deg, rgba(34, 40, 52, 0.95) 0%, rgba(44, 52, 68, 0.9) 100%);
   border: 1px solid var(--premium-border);
   width: 100%;
   border-radius: 16px 16px 0 0;
@@ -556,7 +639,7 @@ html, body, #root {
   align-items: center;
   gap: 8px;
   padding: 12px 14px;
-  background: rgba(31, 36, 48, 0.5);
+  background: rgba(44, 52, 68, 0.5);
   border: 1px solid var(--premium-border);
   border-radius: 8px;
   font-size: 12px;
@@ -613,7 +696,7 @@ html, body, #root {
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(24, 27, 35, 0.8);
+  background: rgba(34, 40, 52, 0.8);
   border-top: 1px solid var(--premium-border);
   display: flex;
   justify-content: space-around;
@@ -646,28 +729,14 @@ html, body, #root {
   -webkit-tap-highlight-color: transparent;
 }
 
-.nav-item::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(27, 145, 255, 0.1), transparent);
-  opacity: 0;
-  border-radius: 8px;
-  transition: opacity 0.25s ease;
-}
-
 .nav-item:active {
   transform: scale(0.95);
 }
 
 .nav-item.active {
   color: var(--premium-primary);
-  background: rgba(27, 145, 255, 0.1);
-  border: 1px solid rgba(27, 145, 255, 0.2);
-}
-
-.nav-item.active::before {
-  opacity: 1;
+  background: rgba(74, 132, 217, 0.12);
+  border-color: rgba(74, 132, 217, 0.2);
 }
 
 .nav-icon {
@@ -677,13 +746,23 @@ html, body, #root {
 }
 
 .nav-item-new {
-  background: linear-gradient(135deg, var(--premium-primary) 0%, var(--premium-primary-dark) 100%) !important;
+  background: var(--premium-primary) !important;
   color: white !important;
   border-radius: 14px !important;
   height: 52px !important;
   flex: 0 0 60px;
-  border-color: rgba(74, 132, 217, 0.5) !important;
-  box-shadow: 0 4px 16px rgba(74, 132, 217, 0.35) !important;
+  border-color: transparent !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.nav-item-home {
+  color: var(--premium-primary);
+  font-weight: 600;
+}
+
+.nav-item-home.active {
+  background: rgba(74, 132, 217, 0.14);
+  border-color: rgba(74, 132, 217, 0.28);
 }
 
 .nav-icon-new {
@@ -829,7 +908,6 @@ html, body, #root {
 }
 
 @media (max-width: 480px) {
-  .buildings-list,
   .ctos-list {
     grid-template-columns: 1fr;
   }
@@ -903,11 +981,11 @@ html, body, #root {
 
 /* Login Page */
 .login-page {
-  background: linear-gradient(135deg, var(--premium-bg) 0%, #0A0D12 100%);
+  background: linear-gradient(135deg, var(--premium-bg) 0%, #12151C 100%);
 }
 
 .login-container {
-  background: rgba(31, 36, 48, 0.6);
+  background: rgba(44, 52, 68, 0.6);
   border: 1px solid var(--premium-border);
   backdrop-filter: blur(20px);
   box-shadow: var(--shadow-xl);
@@ -949,7 +1027,7 @@ html, body, #root {
 
 /* Dashboard Specific */
 .technician-info {
-  background: rgba(31, 36, 48, 0.4);
+  background: rgba(44, 52, 68, 0.4);
   border: 1px solid var(--premium-border);
   border-radius: 8px;
   padding: 16px;
@@ -963,7 +1041,7 @@ html, body, #root {
   align-items: center;
   gap: 8px;
   padding: 12px;
-  background: rgba(31, 36, 48, 0.5);
+  background: rgba(44, 52, 68, 0.5);
   border: 1px solid var(--premium-border);
   border-radius: 6px;
   font-size: 14px;
@@ -980,7 +1058,7 @@ html, body, #root {
 }
 
 .dashboard-card {
-  background: rgba(31, 36, 48, 0.4);
+  background: rgba(44, 52, 68, 0.4);
   border: 1px solid var(--premium-border);
   border-radius: 12px;
   padding: 20px;
@@ -994,7 +1072,7 @@ html, body, #root {
 }
 
 .dashboard-card:hover {
-  background: rgba(31, 36, 48, 0.6);
+  background: rgba(44, 52, 68, 0.6);
   border-color: var(--premium-primary);
   box-shadow: var(--shadow-md);
   transform: translateY(-4px);
@@ -1068,7 +1146,8 @@ html, body, #root {
 }
 
 /* Buildings & CTOs Pages */
-.buildings-list,
+/* .buildings-list is a vertical list (its own layout lives in
+   BuildingsPage.css) — only .ctos-list uses this 2-column grid. */
 .ctos-list {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -1076,7 +1155,6 @@ html, body, #root {
   margin-bottom: 16px;
 }
 
-.buildings-list .card,
 .ctos-list .card {
   margin-bottom: 0;
 }
@@ -1104,7 +1182,7 @@ html, body, #root {
   position: sticky;
   bottom: 88px;
   padding: 16px;
-  background: rgba(24, 27, 35, 0.8);
+  background: rgba(34, 40, 52, 0.8);
   border-top: 1px solid var(--premium-border);
   box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.3);
   z-index: 50;
@@ -1158,7 +1236,7 @@ html, body, #root {
 }
 
 .building-info-card {
-  background: rgba(31, 36, 48, 0.4);
+  background: rgba(44, 52, 68, 0.4);
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 24px;
