@@ -104,6 +104,10 @@ export const setTechnician = async (name, registration) => {
   });
 };
 
+export const clearTechnician = async () => {
+  return db.technicians.clear();
+};
+
 export const saveSyncQueue = async (type, operation, entityId, data) => {
   return db.syncQueue.add({
     type,

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { getTechnician } from './db/dexie';
+import { getTechnician, clearTechnician } from './db/dexie';
 import { setupRealtimeSync } from './services/sync';
+import { isAuthConfigured, getSession, signOut, onAuthStateChange } from './services/supabase';
 
 // Pages
 import LoginPage from './pages/LoginPage';
@@ -110,6 +111,15 @@ function App() {
 
   useEffect(() => {
     const loadTechnician = async () => {
+      if (isAuthConfigured()) {
+        const session = await getSession();
+        if (!session) {
+          setTechnician(null);
+          setIsLoading(false);
+          return;
+        }
+      }
+
       const tech = await getTechnician();
       setTechnician(tech);
       setIsLoading(false);
@@ -120,6 +130,15 @@ function App() {
     };
 
     loadTechnician();
+
+    const unsubscribe = onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        setTechnician(null);
+        clearTechnician();
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handleLogin = (tech) => {
@@ -127,9 +146,12 @@ function App() {
     setupRealtimeSync();
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (isAuthConfigured()) {
+      await signOut();
+    }
+    await clearTechnician();
     setTechnician(null);
-    localStorage.removeItem('technician');
   };
 
   if (isLoading) {

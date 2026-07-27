@@ -15,6 +15,41 @@ export const isOnline = () => {
   return navigator.onLine;
 };
 
+// Login compartilhado: um único usuário/senha do Supabase Auth
+// controla o acesso de toda a equipe (não é conta individual).
+const SHARED_LOGIN_EMAIL = import.meta.env.VITE_APP_LOGIN_EMAIL;
+
+export const isAuthConfigured = () => Boolean(SHARED_LOGIN_EMAIL);
+
+export const signIn = async (password) => {
+  if (!SHARED_LOGIN_EMAIL) {
+    throw new Error('VITE_APP_LOGIN_EMAIL nao configurado no .env.');
+  }
+  const { data, error } = await requireClient().auth.signInWithPassword({
+    email: SHARED_LOGIN_EMAIL,
+    password
+  });
+  if (error) throw error;
+  return data;
+};
+
+export const signOut = async () => {
+  if (!supabase) return;
+  await supabase.auth.signOut();
+};
+
+export const getSession = async () => {
+  if (!supabase) return null;
+  const { data } = await supabase.auth.getSession();
+  return data.session;
+};
+
+export const onAuthStateChange = (callback) => {
+  if (!supabase) return () => {};
+  const { data } = supabase.auth.onAuthStateChange(callback);
+  return () => data.subscription.unsubscribe();
+};
+
 const requireClient = () => {
   if (!supabase) {
     throw new Error('Supabase nao configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_KEY em .env.local.');

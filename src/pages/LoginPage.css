@@ -43,6 +43,12 @@
   margin-bottom: 24px;
 }
 
+.login-checking {
+  text-align: center;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
 .form-group {
   margin-bottom: 16px;
 }

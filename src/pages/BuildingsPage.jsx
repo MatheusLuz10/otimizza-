@@ -207,15 +207,18 @@ function BuildingsPage({ technician }) {
 
                   <div className="building-row-actions" onClick={(e) => e.stopPropagation()}>
                     <button
-                      className="btn btn-secondary btn-xs"
+                      className="icon-btn icon-btn-edit"
                       onClick={() => handleEdit(building)}
+                      title="Editar prédio"
+                      aria-label="Editar prédio"
                     >
                       ✏️
                     </button>
                     <button
-                      className="btn-delete"
+                      className="icon-btn icon-btn-delete"
                       onClick={() => handleDelete(building.id)}
                       title="Deletar prédio"
+                      aria-label="Deletar prédio"
                     >
                       🗑️
                     </button>

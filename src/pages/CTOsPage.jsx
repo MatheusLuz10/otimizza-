@@ -203,8 +203,8 @@ function CTOsPage({ technician }) {
                 <div key={cto.id} className="card">
                   <div className="card-header">
                     <div>
-                      <h3 className="card-title">🔹 {cto.code}</h3>
-                      <p className="card-subtitle">📍 {getBuildingName(cto.buildingId)}</p>
+                      <h3 className="card-title cto-code-title">{cto.code}</h3>
+                      <p className="card-subtitle">{getBuildingName(cto.buildingId)}</p>
                     </div>
                     <span className="badge badge-success">✓</span>
                   </div>
@@ -228,12 +228,12 @@ function CTOsPage({ technician }) {
                     <p className="card-observations">{cto.observations}</p>
                   )}
 
-                  <div className="card-actions">
-                    <button className="btn btn-secondary btn-small" onClick={() => handleEdit(cto)}>
-                      ✏️ Editar
+                  <div className="card-actions card-actions-icons">
+                    <button className="icon-btn icon-btn-edit" onClick={() => handleEdit(cto)} title="Editar" aria-label="Editar">
+                      ✏️
                     </button>
-                    <button className="btn btn-danger btn-small" onClick={() => handleDelete(cto.id)}>
-                      🗑️ Deletar
+                    <button className="icon-btn icon-btn-delete" onClick={() => handleDelete(cto.id)} title="Deletar" aria-label="Deletar">
+                      🗑️
                     </button>
                   </div>
                 </div>

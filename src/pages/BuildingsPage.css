@@ -139,7 +139,7 @@
 /* ── BOTÃO STICKY ADICIONAR ─────────────────────────────────────── */
 .sticky-add-button {
   position: sticky;
-  bottom: 88px;
+  bottom: calc(68px + env(safe-area-inset-bottom, 0px) + 20px);
   padding: 12px 16px;
   background: rgba(28, 33, 43, 0.9);
   border-top: 1px solid var(--premium-border);

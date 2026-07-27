@@ -229,27 +229,30 @@ function ReportPage() {
               const ctosForBuilding = getCTOsForBuilding(building.id);
               return (
                 <div key={building.id} className="card report-card">
-                  <div className="card-header">
-                    <h2 className="card-title">{building.name}</h2>
-                    <span className="badge badge-primary">{ctosForBuilding.length} CTO{ctosForBuilding.length !== 1 ? 's' : ''}</span>
+                  <div className="report-building-header">
+                    <span className="report-building-name">{building.name}</span>
+                    {building.address && <span className="report-building-address">{building.address}</span>}
+                    <span className="badge badge-primary report-building-count">{ctosForBuilding.length} CTO{ctosForBuilding.length !== 1 ? 's' : ''}</span>
                   </div>
-                  {building.address && <p className="card-subtitle">📍 {building.address}</p>}
-                  <p className="card-subtitle">Criado por {building.createdBy || '-'} em {formatDate(building.createdAt)}</p>
+                  <p className="report-building-meta">Criado por {building.createdBy || '-'} em {formatDate(building.createdAt)}</p>
                   {building.observations && <p className="card-observations">{building.observations}</p>}
 
                   {ctosForBuilding.length > 0 && (
                     <div className="report-cto-list">
-                      {ctosForBuilding.map(cto => (
-                        <div key={cto.id} className="report-cto-row">
-                          <span className="detail-value">{cto.code}</span>
-                          <div className="cto-details">
-                            {cto.floor && <span className="detail-item"><span className="detail-label">Andar:</span> {cto.floor}</span>}
-                            {cto.power && <span className="detail-item"><span className="detail-label">Potência:</span> {cto.power}</span>}
-                            {cto.ports != null && cto.ports !== '' && <span className="detail-item"><span className="detail-label">Portas:</span> {cto.ports}</span>}
-                            {cto.splitter && <span className="detail-item"><span className="detail-label">Splitter:</span> {cto.splitter}</span>}
+                      {ctosForBuilding.map(cto => {
+                        const meta = [
+                          cto.floor && `Andar ${cto.floor}`,
+                          cto.power && `Potência ${cto.power}`,
+                          cto.ports != null && cto.ports !== '' && `${cto.ports} portas`,
+                          cto.splitter && `Splitter ${cto.splitter}`
+                        ].filter(Boolean).join('  ·  ');
+                        return (
+                          <div key={cto.id} className="report-cto-row">
+                            <span className="report-cto-code">{cto.code}</span>
+                            {meta && <span className="report-cto-meta">{meta}</span>}
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>

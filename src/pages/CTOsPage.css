@@ -1,3 +1,9 @@
+.cto-code-title {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
 .filters-section {
   display: flex;
   flex-direction: column;

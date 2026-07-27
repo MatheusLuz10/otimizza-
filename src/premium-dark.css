@@ -33,6 +33,22 @@
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.3);
   --shadow-xl: 0 12px 40px rgba(0, 0, 0, 0.35);
+
+  /* Aliases so older components (still styled with the original
+     light-theme variable names) automatically pick up dark-theme
+     colors instead of leaving dark-on-dark or light-on-dark text. */
+  --primary-color: var(--premium-primary);
+  --primary-dark: var(--premium-primary-dark);
+  --primary-light: var(--premium-primary-light);
+  --background: var(--premium-bg);
+  --surface: var(--premium-surface);
+  --text-primary: var(--premium-text);
+  --text-secondary: var(--premium-text-secondary);
+  --border-color: var(--premium-border);
+  --shadow: var(--shadow-sm);
+  --success-color: var(--premium-success);
+  --danger-color: var(--premium-danger);
+  --warning-color: var(--premium-warning);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -300,6 +316,46 @@ textarea::placeholder {
   padding: 8px 12px;
   font-size: 12px;
   border-radius: 6px;
+}
+
+/* Icon-only actions (editar/deletar) — ghost buttons, no label */
+.icon-btn {
+  background: transparent;
+  border: 1px solid var(--premium-border);
+  color: var(--premium-text-secondary);
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--premium-border-light);
+}
+
+.icon-btn-edit:hover {
+  color: var(--premium-primary);
+  border-color: rgba(74, 132, 217, 0.35);
+  background: rgba(74, 132, 217, 0.1);
+}
+
+.icon-btn-delete:hover {
+  color: var(--premium-danger);
+  border-color: rgba(217, 107, 107, 0.35);
+  background: rgba(217, 107, 107, 0.1);
+}
+
+.card-actions-icons {
+  justify-content: flex-end;
 }
 
 .btn-sm {
@@ -852,7 +908,6 @@ textarea::placeholder {
 }
 
 @media (max-width: 480px) {
-  .buildings-list,
   .ctos-list {
     grid-template-columns: 1fr;
   }
@@ -1091,7 +1146,8 @@ textarea::placeholder {
 }
 
 /* Buildings & CTOs Pages */
-.buildings-list,
+/* .buildings-list is a vertical list (its own layout lives in
+   BuildingsPage.css) — only .ctos-list uses this 2-column grid. */
 .ctos-list {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -1099,7 +1155,6 @@ textarea::placeholder {
   margin-bottom: 16px;
 }
 
-.buildings-list .card,
 .ctos-list .card {
   margin-bottom: 0;
 }
