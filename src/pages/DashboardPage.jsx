@@ -152,6 +152,9 @@ function DashboardPage({ technician, onLogout }) {
           <button className="btn btn-secondary btn-block" onClick={() => navigate('/changes')}>
             📋 Ver Mudanças
           </button>
+          <button className="btn btn-secondary btn-block" onClick={() => navigate('/report')}>
+            📊 Ver Relatório
+          </button>
         </div>
 
         <div className="dashboard-help">

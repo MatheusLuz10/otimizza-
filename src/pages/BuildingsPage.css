@@ -141,7 +141,7 @@
   position: sticky;
   bottom: 88px;
   padding: 12px 16px;
-  background: rgba(17, 19, 24, 0.9);
+  background: rgba(28, 33, 43, 0.9);
   border-top: 1px solid var(--premium-border);
   backdrop-filter: blur(10px);
   z-index: 50;

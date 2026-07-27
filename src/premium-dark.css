@@ -7,10 +7,10 @@
    COLOR VARIABLES - Enterprise Corporate Palette
    ───────────────────────────────────────────────────────────────────────────── */
 :root {
-  --premium-bg: #111318;
-  --premium-surface: #1A1F29;
-  --premium-card: #202632;
-  --premium-input: #1A1F29;
+  --premium-bg: #1C212B;
+  --premium-surface: #262D3A;
+  --premium-card: #2C3444;
+  --premium-input: #262D3A;
   --premium-primary: #4A84D9;
   --premium-primary-light: #5A94E9;
   --premium-primary-dark: #3A74C9;
@@ -18,8 +18,8 @@
   --premium-text: #F0F4FF;
   --premium-text-secondary: #C2CEDE;
   --premium-text-tertiary: #8FA0B4;
-  --premium-border: rgba(255,255,255,0.05);
-  --premium-border-light: rgba(255,255,255,0.08);
+  --premium-border: rgba(255,255,255,0.08);
+  --premium-border-light: rgba(255,255,255,0.12);
   --premium-success: #3FA37C;
   --premium-warning: #D4A547;
   --premium-danger: #D96B6B;
@@ -66,7 +66,7 @@ textarea::placeholder {
 .prefix-input-wrapper {
   display: flex;
   align-items: stretch;
-  background: rgba(37, 45, 56, 0.5);
+  background: rgba(50, 58, 74, 0.5);
   border: 1px solid var(--premium-border);
   border-radius: 8px;
   overflow: hidden;
@@ -75,7 +75,7 @@ textarea::placeholder {
 
 .prefix-input-wrapper:focus-within {
   border-color: var(--premium-primary);
-  background: rgba(37, 45, 56, 0.85);
+  background: rgba(50, 58, 74, 0.85);
 }
 
 .input-prefix {
@@ -132,7 +132,7 @@ textarea::placeholder {
    ───────────────────────────────────────────────────────────────────────────── */
 
 .page {
-  background: linear-gradient(135deg, var(--premium-bg) 0%, #0F1117 100%);
+  background: linear-gradient(135deg, var(--premium-bg) 0%, #171B24 100%);
   min-height: 100vh;
   padding-bottom: 88px;
 }
@@ -145,7 +145,7 @@ textarea::placeholder {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: rgba(24, 27, 35, 0.7);
+  background: rgba(34, 40, 52, 0.7);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--premium-border);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
@@ -178,7 +178,7 @@ textarea::placeholder {
    ───────────────────────────────────────────────────────────────────────────── */
 
 .card {
-  background: rgba(31, 36, 48, 0.4);
+  background: rgba(44, 52, 68, 0.4);
   border: 1px solid var(--premium-border);
   border-radius: 12px;
   padding: 16px;
@@ -191,7 +191,7 @@ textarea::placeholder {
 }
 
 .card:hover {
-  background: rgba(31, 36, 48, 0.6);
+  background: rgba(44, 52, 68, 0.6);
   border-color: var(--premium-border-light);
   box-shadow: var(--shadow-md);
 }
@@ -341,7 +341,7 @@ textarea::placeholder {
 .form-input {
   width: 100%;
   padding: 12px 14px;
-  background: rgba(37, 45, 56, 0.5);
+  background: rgba(50, 58, 74, 0.5);
   border: 1px solid var(--premium-border);
   border-radius: 8px;
   font-size: 14px;
@@ -358,11 +358,11 @@ textarea::placeholder {
 .form-input:focus {
   outline: none;
   border-color: var(--premium-primary);
-  background: rgba(37, 45, 56, 0.8);
+  background: rgba(50, 58, 74, 0.8);
 }
 
 .form-input:disabled {
-  background: rgba(37, 45, 56, 0.3);
+  background: rgba(50, 58, 74, 0.3);
   color: var(--premium-text-secondary);
   cursor: not-allowed;
   opacity: 0.6;
@@ -433,7 +433,7 @@ textarea::placeholder {
 .search-box input {
   flex: 1;
   padding: 12px 14px;
-  background: rgba(37, 45, 56, 0.5);
+  background: rgba(50, 58, 74, 0.5);
   border: 1px solid var(--premium-border);
   border-radius: 8px;
   font-size: 14px;
@@ -445,7 +445,7 @@ textarea::placeholder {
 .search-box input:focus {
   outline: none;
   border-color: var(--premium-primary);
-  background: rgba(37, 45, 56, 0.8);
+  background: rgba(50, 58, 74, 0.8);
 }
 
 .search-box button {
@@ -475,7 +475,7 @@ textarea::placeholder {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(16, 19, 26, 0.7);
+  background: rgba(28, 33, 43, 0.7);
   backdrop-filter: blur(6px);
   display: flex;
   align-items: flex-end;
@@ -495,7 +495,7 @@ textarea::placeholder {
 }
 
 .modal {
-  background: linear-gradient(135deg, rgba(24, 27, 35, 0.95) 0%, rgba(31, 36, 48, 0.9) 100%);
+  background: linear-gradient(135deg, rgba(34, 40, 52, 0.95) 0%, rgba(44, 52, 68, 0.9) 100%);
   border: 1px solid var(--premium-border);
   width: 100%;
   border-radius: 16px 16px 0 0;
@@ -583,7 +583,7 @@ textarea::placeholder {
   align-items: center;
   gap: 8px;
   padding: 12px 14px;
-  background: rgba(31, 36, 48, 0.5);
+  background: rgba(44, 52, 68, 0.5);
   border: 1px solid var(--premium-border);
   border-radius: 8px;
   font-size: 12px;
@@ -640,7 +640,7 @@ textarea::placeholder {
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(24, 27, 35, 0.8);
+  background: rgba(34, 40, 52, 0.8);
   border-top: 1px solid var(--premium-border);
   display: flex;
   justify-content: space-around;
@@ -926,11 +926,11 @@ textarea::placeholder {
 
 /* Login Page */
 .login-page {
-  background: linear-gradient(135deg, var(--premium-bg) 0%, #0A0D12 100%);
+  background: linear-gradient(135deg, var(--premium-bg) 0%, #12151C 100%);
 }
 
 .login-container {
-  background: rgba(31, 36, 48, 0.6);
+  background: rgba(44, 52, 68, 0.6);
   border: 1px solid var(--premium-border);
   backdrop-filter: blur(20px);
   box-shadow: var(--shadow-xl);
@@ -972,7 +972,7 @@ textarea::placeholder {
 
 /* Dashboard Specific */
 .technician-info {
-  background: rgba(31, 36, 48, 0.4);
+  background: rgba(44, 52, 68, 0.4);
   border: 1px solid var(--premium-border);
   border-radius: 8px;
   padding: 16px;
@@ -986,7 +986,7 @@ textarea::placeholder {
   align-items: center;
   gap: 8px;
   padding: 12px;
-  background: rgba(31, 36, 48, 0.5);
+  background: rgba(44, 52, 68, 0.5);
   border: 1px solid var(--premium-border);
   border-radius: 6px;
   font-size: 14px;
@@ -1003,7 +1003,7 @@ textarea::placeholder {
 }
 
 .dashboard-card {
-  background: rgba(31, 36, 48, 0.4);
+  background: rgba(44, 52, 68, 0.4);
   border: 1px solid var(--premium-border);
   border-radius: 12px;
   padding: 20px;
@@ -1017,7 +1017,7 @@ textarea::placeholder {
 }
 
 .dashboard-card:hover {
-  background: rgba(31, 36, 48, 0.6);
+  background: rgba(44, 52, 68, 0.6);
   border-color: var(--premium-primary);
   box-shadow: var(--shadow-md);
   transform: translateY(-4px);
@@ -1127,7 +1127,7 @@ textarea::placeholder {
   position: sticky;
   bottom: 88px;
   padding: 16px;
-  background: rgba(24, 27, 35, 0.8);
+  background: rgba(34, 40, 52, 0.8);
   border-top: 1px solid var(--premium-border);
   box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.3);
   z-index: 50;
@@ -1181,7 +1181,7 @@ textarea::placeholder {
 }
 
 .building-info-card {
-  background: rgba(31, 36, 48, 0.4);
+  background: rgba(44, 52, 68, 0.4);
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 24px;

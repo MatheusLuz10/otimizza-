@@ -10,6 +10,7 @@ import BuildingsPage from './pages/BuildingsPage';
 import CTOsPage from './pages/CTOsPage';
 import BuildingDetailPage from './pages/BuildingDetailPage';
 import ChangesPage from './pages/ChangesPage';
+import ReportPage from './pages/ReportPage';
 
 import './App.css';
 
@@ -95,6 +96,7 @@ function AppRoutes({ technician, onLogin, onLogout }) {
         <Route path="/buildings/:id" element={<BuildingDetailPage technician={technician} />} />
         <Route path="/ctos" element={<CTOsPage technician={technician} />} />
         <Route path="/changes" element={<ChangesPage />} />
+        <Route path="/report" element={<ReportPage />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
       <BottomNav />
