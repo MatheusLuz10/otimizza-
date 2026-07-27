@@ -7,6 +7,7 @@ import './LoginPage.css';
 function LoginPage({ onLogin }) {
   const [step, setStep] = useState(isAuthConfigured() ? 'password' : 'profile');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
   const [registration, setRegistration] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -81,15 +82,27 @@ function LoginPage({ onLogin }) {
           <form onSubmit={handlePasswordSubmit} className="login-form">
             <div className="form-group">
               <label className="form-label">Senha de acesso</label>
-              <input
-                type="password"
-                className="form-input"
-                placeholder="Digite a senha da equipe"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
-                autoFocus
-              />
+              <div className="password-input-wrapper">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  className="form-input"
+                  placeholder="Digite a senha da equipe"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword(v => !v)}
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                  title={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                >
+                  {showPassword ? '🙈' : '👁️'}
+                </button>
+              </div>
             </div>
 
             {error && (
