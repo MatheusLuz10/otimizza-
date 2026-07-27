@@ -12,10 +12,20 @@
 }
 
 .report-copy-feedback {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--premium-success);
   margin-bottom: 16px;
+}
+
+.report-copy-feedback.success {
+  color: var(--premium-success);
+}
+
+.report-copy-feedback.error {
+  color: var(--premium-danger);
 }
 
 .report-summary {

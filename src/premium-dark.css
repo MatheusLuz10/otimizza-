@@ -1015,6 +1015,9 @@ textarea::placeholder {
 }
 
 .error-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   background: rgba(239, 68, 68, 0.15);
   color: #FF6B6B;
   padding: 12px;
@@ -1023,6 +1026,10 @@ textarea::placeholder {
   margin-bottom: 16px;
   border-left: 3px solid #FF6B6B;
   border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.error-message svg {
+  flex-shrink: 0;
 }
 
 /* Dashboard Specific */
@@ -1079,7 +1086,8 @@ textarea::placeholder {
 }
 
 .card-icon {
-  font-size: 32px;
+  color: var(--premium-primary);
+  flex-shrink: 0;
 }
 
 .card-number {
@@ -1117,10 +1125,22 @@ textarea::placeholder {
 }
 
 .dashboard-help h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 14px;
   font-weight: 700;
   margin: 0 0 12px 0;
   color: var(--premium-primary);
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .dashboard-help ul {

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, MapPin, Package, Plus, Pencil, Trash2, X, Check } from 'lucide-react';
 import { safeLogAudit, describeFieldChanges } from '../db/dexie';
 import {
   fetchBuildings, fetchCTOsByBuilding, createCTO, updateCTO, deleteCTO,
@@ -229,7 +230,7 @@ function BuildingDetailPage({ technician }) {
   if (isLoading) return (
     <div className="page">
       <div className="page-header">
-        <button className="btn-back" onClick={() => navigate('/buildings')}>← Voltar</button>
+        <button className="btn-back" onClick={() => navigate('/buildings')}><ArrowLeft size={16} /> Voltar</button>
         <h1 className="page-title">Carregando...</h1>
       </div>
     </div>
@@ -238,7 +239,7 @@ function BuildingDetailPage({ technician }) {
   if (!building) return (
     <div className="page">
       <div className="page-header">
-        <button className="btn-back" onClick={() => navigate('/buildings')}>← Voltar</button>
+        <button className="btn-back" onClick={() => navigate('/buildings')}><ArrowLeft size={16} /> Voltar</button>
         <h1 className="page-title">Prédio não encontrado</h1>
       </div>
     </div>
@@ -247,14 +248,14 @@ function BuildingDetailPage({ technician }) {
   return (
     <div className="page">
       <div className="page-header">
-        <button className="btn-back" onClick={() => navigate('/buildings')}>← Voltar</button>
+        <button className="btn-back" onClick={() => navigate('/buildings')}><ArrowLeft size={16} /> Voltar</button>
         <h1 className="page-title">{building.name}</h1>
       </div>
 
       <div className="page-content">
         <div className="building-info-card">
           <h2 className="building-name">{building.name}</h2>
-          {building.address && <p className="building-address">📍 {building.address}</p>}
+          {building.address && <p className="building-address"><MapPin size={13} /> {building.address}</p>}
           {building.observations && (
             <div className="building-observations">
               <h4>Observações</h4>
@@ -281,13 +282,13 @@ function BuildingDetailPage({ technician }) {
           <div className="section-header">
             <h3 className="section-title">Caixas CTO</h3>
             <button className="btn btn-primary btn-sm" onClick={openCreateForm}>
-              ➕ Nova Caixa
+              <Plus size={15} /> Nova Caixa
             </button>
           </div>
 
           {ctos.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-state-icon">📦</div>
+              <Package className="empty-state-icon" size={40} strokeWidth={1.5} />
               <div className="empty-state-title">Nenhuma caixa CTO</div>
               <div className="empty-state-text">Adicione a primeira caixa para este prédio</div>
             </div>
@@ -298,7 +299,7 @@ function BuildingDetailPage({ technician }) {
                   <div className="cto-row-body">
                     <span className="cto-row-code">{cto.code}</span>
                     <div className="cto-row-tags">
-                      {cto.floor    && <span className="cto-tag cto-tag-floor">📍 {cto.floor}</span>}
+                      {cto.floor    && <span className="cto-tag cto-tag-floor"><MapPin size={11} /> {cto.floor}</span>}
                       {cto.splitter && <span className="cto-tag">{cto.splitter}</span>}
                       {cto.power    && <span className="cto-tag">{cto.power}</span>}
                     </div>
@@ -309,11 +310,11 @@ function BuildingDetailPage({ technician }) {
                     )}
                   </div>
                   <div className="cto-row-actions">
-                    <button className="btn btn-secondary btn-xs" onClick={() => openEditForm(cto)}>
-                      ✏️
+                    <button className="icon-btn icon-btn-edit" onClick={() => openEditForm(cto)} title="Editar" aria-label="Editar">
+                      <Pencil size={15} />
                     </button>
-                    <button className="btn-delete" onClick={() => handleDeleteCTO(cto.id, cto.code)} title="Deletar">
-                      🗑️
+                    <button className="icon-btn icon-btn-delete" onClick={() => handleDeleteCTO(cto.id, cto.code)} title="Deletar" aria-label="Deletar">
+                      <Trash2 size={15} />
                     </button>
                   </div>
                 </div>
@@ -329,7 +330,7 @@ function BuildingDetailPage({ technician }) {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2 className="modal-title">Nova(s) Caixa(s) CTO</h2>
-              <button className="modal-close" onClick={closeForm}>✕</button>
+              <button className="modal-close" onClick={closeForm}><X size={18} /></button>
             </div>
 
             <form onSubmit={handleCreateCTOs}>
@@ -366,7 +367,7 @@ function BuildingDetailPage({ technician }) {
                         disabled={isSaving}
                         title="Remover linha"
                       >
-                        ✕
+                        <X size={14} />
                       </button>
                     )}
                   </div>
@@ -379,7 +380,7 @@ function BuildingDetailPage({ technician }) {
                 onClick={addRow}
                 disabled={isSaving}
               >
-                + Adicionar andar
+                <Plus size={14} /> Adicionar andar
               </button>
 
               {/* Campos comuns */}
@@ -436,8 +437,12 @@ function BuildingDetailPage({ technician }) {
 
               {saveResult && (
                 <div className={`batch-result ${saveResult.failed > 0 ? 'partial' : 'success'}`}>
-                  {saveResult.ok > 0 && `✓ ${saveResult.ok} caixa(s) criada(s). `}
-                  {saveResult.failed > 0 && `✕ ${saveResult.failed} falhou (código duplicado?).`}
+                  {saveResult.ok > 0 && (
+                    <span className="batch-result-line"><Check size={14} /> {saveResult.ok} caixa(s) criada(s).</span>
+                  )}
+                  {saveResult.failed > 0 && (
+                    <span className="batch-result-line"><X size={14} /> {saveResult.failed} falhou (código duplicado?).</span>
+                  )}
                 </div>
               )}
 
@@ -462,7 +467,7 @@ function BuildingDetailPage({ technician }) {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2 className="modal-title">Editar Caixa CTO</h2>
-              <button className="modal-close" onClick={closeForm}>✕</button>
+              <button className="modal-close" onClick={closeForm}><X size={18} /></button>
             </div>
 
             <form onSubmit={handleEditCTO}>

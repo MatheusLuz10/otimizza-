@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, Check, ClipboardList, Printer, BarChart3 } from 'lucide-react';
 import { fetchBuildings, fetchCTOs, fromSupabaseBuilding, fromSupabaseCTO, isOnline, isSupabaseConfigured } from '../services/supabase';
 import './ReportPage.css';
 
@@ -17,7 +18,7 @@ function ReportPage() {
   const [filterTechnician, setFilterTechnician] = useState('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  const [copyFeedback, setCopyFeedback] = useState('');
+  const [copyFeedback, setCopyFeedback] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -138,12 +139,12 @@ function ReportPage() {
     const text = buildReportText();
     try {
       await navigator.clipboard.writeText(text);
-      setCopyFeedback('✓ Relatório copiado!');
+      setCopyFeedback({ success: true, message: 'Relatório copiado!' });
     } catch (err) {
       console.error('Erro ao copiar relatório:', err);
-      setCopyFeedback('Não foi possível copiar automaticamente.');
+      setCopyFeedback({ success: false, message: 'Não foi possível copiar automaticamente.' });
     } finally {
-      setTimeout(() => setCopyFeedback(''), 2500);
+      setTimeout(() => setCopyFeedback(null), 2500);
     }
   };
 
@@ -154,7 +155,7 @@ function ReportPage() {
       </div>
 
       <div className="page-content">
-        {error && <div className="error-message">⚠️ {error}</div>}
+        {error && <div className="error-message"><AlertTriangle size={16} /> {error}</div>}
 
         <div className="report-filters">
           <div className="form-group">
@@ -193,14 +194,18 @@ function ReportPage() {
             Limpar filtros
           </button>
           <button type="button" className="btn btn-primary btn-sm" onClick={handleCopy} disabled={isLoading || filteredBuildings.length === 0}>
-            📋 Copiar relatório
+            <ClipboardList size={15} /> Copiar relatório
           </button>
           <button type="button" className="btn btn-secondary btn-sm" onClick={() => window.print()} disabled={isLoading || filteredBuildings.length === 0}>
-            🖨️ Imprimir
+            <Printer size={15} /> Imprimir
           </button>
         </div>
 
-        {copyFeedback && <div className="report-copy-feedback">{copyFeedback}</div>}
+        {copyFeedback && (
+          <div className={`report-copy-feedback ${copyFeedback.success ? 'success' : 'error'}`}>
+            {copyFeedback.success ? <Check size={15} /> : <AlertTriangle size={15} />} {copyFeedback.message}
+          </div>
+        )}
 
         <div className="report-summary">
           <div className="summary-item">
@@ -219,7 +224,7 @@ function ReportPage() {
           </div>
         ) : filteredBuildings.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-state-icon">📊</div>
+            <BarChart3 className="empty-state-icon" size={40} strokeWidth={1.5} />
             <div className="empty-state-title">Nenhum resultado</div>
             <div className="empty-state-text">Ajuste os filtros para ver prédios e CTOs no relatório.</div>
           </div>

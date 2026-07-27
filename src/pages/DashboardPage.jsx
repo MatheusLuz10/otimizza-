@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Check, X, Building2, Package, ChevronRight, RefreshCw, ClipboardList, BarChart3, Info } from 'lucide-react';
 import { isOnline, checkConnectionDetails, isSupabaseConfigured, fetchBuildings, fetchCTOs } from '../services/supabase';
 import './DashboardPage.css';
 
@@ -110,27 +111,27 @@ function DashboardPage({ technician, onLogout }) {
 
         {refreshStatus && (
           <div className={`sync-status ${refreshStatus.success ? 'success' : 'error'}`}>
-            {refreshStatus.success ? '✓' : '✕'} {refreshStatus.message}
+            {refreshStatus.success ? <Check size={16} /> : <X size={16} />} {refreshStatus.message}
           </div>
         )}
 
         <div className="dashboard-grid">
           <div className="dashboard-card" onClick={() => navigate('/buildings')}>
-            <div className="card-icon">🏢</div>
+            <Building2 className="card-icon" size={28} strokeWidth={1.75} />
             <div className="card-info">
               <div className="card-number">{buildingCount}</div>
               <div className="card-label">Prédios</div>
             </div>
-            <div className="card-arrow">→</div>
+            <ChevronRight className="card-arrow" size={18} />
           </div>
 
           <div className="dashboard-card" onClick={() => navigate('/ctos')}>
-            <div className="card-icon">📦</div>
+            <Package className="card-icon" size={28} strokeWidth={1.75} />
             <div className="card-info">
               <div className="card-number">{ctoCount}</div>
               <div className="card-label">Caixas CTO</div>
             </div>
-            <div className="card-arrow">→</div>
+            <ChevronRight className="card-arrow" size={18} />
           </div>
         </div>
 
@@ -139,26 +140,26 @@ function DashboardPage({ technician, onLogout }) {
           onClick={handleRefresh}
           disabled={isRefreshing || !online}
         >
-          {isRefreshing ? '⏳ Atualizando...' : '🔄 Atualizar Dados'}
+          <RefreshCw size={16} className={isRefreshing ? 'spin' : ''} /> {isRefreshing ? 'Atualizando...' : 'Atualizar Dados'}
         </button>
 
         <div className="dashboard-actions">
           <button className="btn btn-secondary btn-block" onClick={() => navigate('/buildings')}>
-            🏢 Ver Prédios
+            <Building2 size={16} /> Ver Prédios
           </button>
           <button className="btn btn-secondary btn-block" onClick={() => navigate('/ctos')}>
-            📦 Ver Caixas CTO
+            <Package size={16} /> Ver Caixas CTO
           </button>
           <button className="btn btn-secondary btn-block" onClick={() => navigate('/changes')}>
-            📋 Ver Mudanças
+            <ClipboardList size={16} /> Ver Mudanças
           </button>
           <button className="btn btn-secondary btn-block" onClick={() => navigate('/report')}>
-            📊 Ver Relatório
+            <BarChart3 size={16} /> Ver Relatório
           </button>
         </div>
 
         <div className="dashboard-help">
-          <h3>ℹ️ Informações</h3>
+          <h3><Info size={15} /> Informações</h3>
           <ul>
             <li>Todos os dados são carregados diretamente do Supabase</li>
             <li>Alterações aparecem em tempo real em todos os dispositivos</li>

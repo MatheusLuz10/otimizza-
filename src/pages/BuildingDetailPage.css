@@ -20,6 +20,7 @@
   min-height: 44px;
   display: inline-flex;
   align-items: center;
+  gap: 6px;
 }
 
 .btn-back:hover {
@@ -50,6 +51,9 @@
 }
 
 .building-address {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 14px;
   color: var(--premium-text-secondary);
   margin: 0 0 16px 0;
@@ -201,6 +205,9 @@
 }
 
 .cto-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   font-size: 11px;
   font-weight: 600;
   padding: 2px 8px;
@@ -311,6 +318,9 @@
 
 /* Botão remover linha */
 .btn-remove-row {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: transparent;
   border: none;
   color: var(--premium-text-tertiary);
@@ -329,6 +339,10 @@
 
 /* Botão adicionar linha */
 .btn-add-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   background: transparent;
   border: 1px dashed var(--premium-border-light);
   color: var(--premium-primary);
@@ -349,11 +363,20 @@
 
 /* Resultado do envio em lote */
 .batch-result {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   padding: 10px 12px;
   border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
   margin-bottom: 12px;
+}
+
+.batch-result-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .batch-result.success {

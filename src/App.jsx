@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { Home, Building2, Plus, Package, Search } from 'lucide-react';
 import { getTechnician, clearTechnician } from './db/dexie';
 import { setupRealtimeSync } from './services/sync';
-import { isAuthConfigured, getSession, signOut, onAuthStateChange } from './services/supabase';
 
 // Pages
 import LoginPage from './pages/LoginPage';
@@ -44,35 +44,35 @@ function BottomNav() {
         className={`nav-item nav-item-home ${location.pathname === '/' ? 'active' : ''}`}
         onClick={() => navigate('/')}
       >
-        <span className="nav-icon">🏠</span>
+        <Home className="nav-icon" size={20} strokeWidth={2} />
         <span>Início</span>
       </button>
       <button
         className={`nav-item ${isBuildingsActive ? 'active' : ''}`}
         onClick={() => navigate('/buildings')}
       >
-        <span className="nav-icon">🏢</span>
+        <Building2 className="nav-icon" size={20} strokeWidth={2} />
         <span>Prédios</span>
       </button>
       <button
         className="nav-item nav-item-new"
         onClick={handleNew}
       >
-        <span className="nav-icon nav-icon-new">➕</span>
+        <Plus className="nav-icon nav-icon-new" size={22} strokeWidth={2.5} />
         <span>Novo</span>
       </button>
       <button
         className={`nav-item ${isCTOsActive ? 'active' : ''}`}
         onClick={() => navigate('/ctos')}
       >
-        <span className="nav-icon">📦</span>
+        <Package className="nav-icon" size={20} strokeWidth={2} />
         <span>CTOs</span>
       </button>
       <button
         className="nav-item"
         onClick={handleSearch}
       >
-        <span className="nav-icon">🔍</span>
+        <Search className="nav-icon" size={20} strokeWidth={2} />
         <span>Buscar</span>
       </button>
     </nav>
@@ -111,15 +111,6 @@ function App() {
 
   useEffect(() => {
     const loadTechnician = async () => {
-      if (isAuthConfigured()) {
-        const session = await getSession();
-        if (!session) {
-          setTechnician(null);
-          setIsLoading(false);
-          return;
-        }
-      }
-
       const tech = await getTechnician();
       setTechnician(tech);
       setIsLoading(false);
@@ -130,15 +121,6 @@ function App() {
     };
 
     loadTechnician();
-
-    const unsubscribe = onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') {
-        setTechnician(null);
-        clearTechnician();
-      }
-    });
-
-    return () => unsubscribe();
   }, []);
 
   const handleLogin = (tech) => {
@@ -147,9 +129,6 @@ function App() {
   };
 
   const handleLogout = async () => {
-    if (isAuthConfigured()) {
-      await signOut();
-    }
     await clearTechnician();
     setTechnician(null);
   };

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { History } from 'lucide-react';
 import { getAuditLogs } from '../db/dexie';
 import { fetchBuildings, fetchCTOs, fetchAuditLogs, fromSupabaseBuilding, fromSupabaseCTO, isOnline, isSupabaseConfigured } from '../services/supabase';
 import './ChangesPage.css';
@@ -148,7 +149,7 @@ function ChangesPage() {
 
         {filteredLogs.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-state-icon">M</div>
+            <History className="empty-state-icon" size={40} strokeWidth={1.5} />
             <div className="empty-state-title">Nenhuma mudança registrada</div>
             <div className="empty-state-text">
               As criações, alterações e exclusões feitas no app aparecem aqui.

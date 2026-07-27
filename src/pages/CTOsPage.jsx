@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Package, Plus, Check, Pencil, Trash2, X } from 'lucide-react';
 import { safeLogAudit, describeFieldChanges } from '../db/dexie';
 import {
   fetchBuildings, fetchCTOs, createCTO, updateCTO, deleteCTO,
@@ -185,7 +186,7 @@ function CTOsPage({ technician }) {
 
         {filteredCTOs.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-state-icon">📦</div>
+            <Package className="empty-state-icon" size={40} strokeWidth={1.5} />
             <div className="empty-state-title">Nenhuma caixa CTO encontrada</div>
             <div className="empty-state-text">
               {ctos.length === 0
@@ -193,7 +194,7 @@ function CTOsPage({ technician }) {
                 : 'Nenhum resultado para sua busca'}
             </div>
             <button className="btn btn-primary" onClick={() => setShowForm(true)}>
-              ➕ Nova Caixa CTO
+              <Plus size={16} /> Nova Caixa CTO
             </button>
           </div>
         ) : (
@@ -206,7 +207,7 @@ function CTOsPage({ technician }) {
                       <h3 className="card-title cto-code-title">{cto.code}</h3>
                       <p className="card-subtitle">{getBuildingName(cto.buildingId)}</p>
                     </div>
-                    <span className="badge badge-success">✓</span>
+                    <span className="badge badge-success"><Check size={13} /></span>
                   </div>
 
                   <div className="cto-details">
@@ -230,10 +231,10 @@ function CTOsPage({ technician }) {
 
                   <div className="card-actions card-actions-icons">
                     <button className="icon-btn icon-btn-edit" onClick={() => handleEdit(cto)} title="Editar" aria-label="Editar">
-                      ✏️
+                      <Pencil size={15} />
                     </button>
                     <button className="icon-btn icon-btn-delete" onClick={() => handleDelete(cto.id)} title="Deletar" aria-label="Deletar">
-                      🗑️
+                      <Trash2 size={15} />
                     </button>
                   </div>
                 </div>
@@ -242,7 +243,7 @@ function CTOsPage({ technician }) {
 
             <div className="sticky-add-button">
               <button className="btn btn-primary btn-block" onClick={() => setShowForm(true)}>
-                ➕ Nova Caixa CTO
+                <Plus size={16} /> Nova Caixa CTO
               </button>
             </div>
           </>
@@ -254,7 +255,7 @@ function CTOsPage({ technician }) {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2 className="modal-title">{editingId ? 'Editar Caixa CTO' : 'Nova Caixa CTO'}</h2>
-              <button className="modal-close" onClick={handleCancel}>✕</button>
+              <button className="modal-close" onClick={handleCancel}><X size={18} /></button>
             </div>
 
             <form onSubmit={handleSubmit}>

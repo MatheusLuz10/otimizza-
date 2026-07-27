@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Building2, Plus, MapPin, Pencil, Trash2, X } from 'lucide-react';
 import { safeLogAudit, describeFieldChanges } from '../db/dexie';
 import {
   fetchBuildings, fetchCTOs, createBuilding, updateBuilding, deleteBuilding, fromSupabaseBuilding
@@ -173,7 +174,7 @@ function BuildingsPage({ technician }) {
       <div className="page-content">
         {filteredBuildings.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-state-icon">🏢</div>
+            <Building2 className="empty-state-icon" size={40} strokeWidth={1.5} />
             <div className="empty-state-title">Nenhum prédio encontrado</div>
             <div className="empty-state-text">
               {buildings.length === 0
@@ -181,7 +182,7 @@ function BuildingsPage({ technician }) {
                 : 'Nenhum resultado para sua busca'}
             </div>
             <button className="btn btn-primary" onClick={() => setShowForm(true)}>
-              ➕ Novo Prédio
+              <Plus size={16} /> Novo Prédio
             </button>
           </div>
         ) : (
@@ -196,7 +197,7 @@ function BuildingsPage({ technician }) {
                   <div className="building-row-info">
                     <span className="building-row-name">{building.name}</span>
                     {building.address && (
-                      <span className="building-row-address">📍 {building.address}</span>
+                      <span className="building-row-address"><MapPin size={12} /> {building.address}</span>
                     )}
                   </div>
 
@@ -212,7 +213,7 @@ function BuildingsPage({ technician }) {
                       title="Editar prédio"
                       aria-label="Editar prédio"
                     >
-                      ✏️
+                      <Pencil size={15} />
                     </button>
                     <button
                       className="icon-btn icon-btn-delete"
@@ -220,7 +221,7 @@ function BuildingsPage({ technician }) {
                       title="Deletar prédio"
                       aria-label="Deletar prédio"
                     >
-                      🗑️
+                      <Trash2 size={15} />
                     </button>
                   </div>
                 </div>
@@ -229,7 +230,7 @@ function BuildingsPage({ technician }) {
 
             <div className="sticky-add-button">
               <button className="btn btn-primary btn-block" onClick={() => setShowForm(true)}>
-                ➕ Novo Prédio
+                <Plus size={16} /> Novo Prédio
               </button>
             </div>
           </>
@@ -241,7 +242,7 @@ function BuildingsPage({ technician }) {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2 className="modal-title">{editingId ? 'Editar Prédio' : 'Novo Prédio'}</h2>
-              <button className="modal-close" onClick={handleCancel}>✕</button>
+              <button className="modal-close" onClick={handleCancel}><X size={18} /></button>
             </div>
 
             <form onSubmit={handleSubmit}>
